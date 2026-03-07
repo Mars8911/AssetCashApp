@@ -542,15 +542,17 @@ class _MemberCenterViewState extends State<MemberCenterView> {
                 label,
                 style: TextStyle(
                   color: DashboardDesign.textBlue200,
-                  fontSize: DashboardDesign.fontSizeSm,
+                  fontSize: DashboardDesign.fontSizeXs,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
                 value,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.lexend(
                   color: Colors.white,
-                  fontSize: DashboardDesign.fontSize3xl,
+                  fontSize: DashboardDesign.fontSizeXl,
                   fontWeight: FontWeight.bold,
                 ),
               ),

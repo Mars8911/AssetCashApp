@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dashboard_view.dart';
 import 'member_center_view.dart';
 import 'notifications_view.dart';
+import 'settings_view.dart';
 
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
@@ -18,9 +19,7 @@ class _HomeViewState extends State<HomeView> {
     const DashboardView(),
     const MemberCenterView(),
     const NotificationsView(),
-    const Center(
-      child: Text('設定', style: TextStyle(color: Colors.white, fontSize: 24)),
-    ),
+    const SettingsView(),
   ];
 
   @override

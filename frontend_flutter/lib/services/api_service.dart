@@ -15,8 +15,10 @@ class ApiService {
       final response = await _dio.get('$baseUrl/dashboard');
 
       if (response.statusCode == 200) {
-        // 抓取 JSON 中的 summary 部分並轉換
-        return LoanSummary.fromJson(response.data['data']['summary']);
+        final data = response.data['data'] as Map<String, dynamic>;
+        final summaryJson = Map<String, dynamic>.from(data['summary'] as Map<String, dynamic>);
+        summaryJson['loans'] = data['loans'] ?? [];
+        return LoanSummary.fromJson(summaryJson);
       } else {
         throw Exception('伺服器回應錯誤: ${response.statusCode}');
       }

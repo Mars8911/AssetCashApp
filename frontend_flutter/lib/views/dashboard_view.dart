@@ -5,13 +5,11 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
 import '../constants/dashboard_design.dart';
+import '../models/loan.dart';
 import '../models/loan_summary.dart';
 
-/// 首頁訊息類型
+/// 首頁訊息篩選類型（保留供日後依案件類型篩選）
 enum MessageType { dongBao, realEstate, other }
-
-/// 訊息類型（用於顯示左側圓點顏色，與設計稿 type 對應）
-enum MessageStatus { reminder, success, info }
 
 class DashboardView extends StatefulWidget {
   const DashboardView({
@@ -433,43 +431,26 @@ class _DashboardViewState extends State<DashboardView> {
   }
 
   List<Widget> _buildMessageList() {
-    // 模擬資料，可之後改為從 API / snapshot.data 取得
-    final messages = [
-      _MessageItem(
-        status: MessageStatus.reminder,
-        title: '汽車貸款繳款提醒',
-        content: '車牌 ABC-1234 本月還款日為 3/5，應繳 NT\$92,592',
-        date: '2026-03-01',
-      ),
-      _MessageItem(
-        status: MessageStatus.success,
-        title: '機車貸款付款成功',
-        content: '車牌 XYZ-9876 已成功繳納 2 月份款項 NT\$8,500',
-        date: '2026-02-15',
-      ),
-    ];
-
-    return messages
-        .map((m) => Padding(
+    final loans = widget.summary?.loans ?? <Loan>[];
+    return loans
+        .map((loan) => Padding(
               padding: const EdgeInsets.only(bottom: 12),
-              child: _buildMessageCard(m),
+              child: _buildLoanMessageCard(loan),
             ))
         .toList();
   }
 
-  Color _dotColorForStatus(MessageStatus status) {
-    switch (status) {
-      case MessageStatus.reminder:
-        return DashboardDesign.orange400;
-      case MessageStatus.success:
-        return DashboardDesign.green400;
-      case MessageStatus.info:
-        return DashboardDesign.blue400;
-    }
+  /// 依貸款餘額決定左側圓點顏色：餘額 > 0 橘色（提醒），否則綠色（已清償）
+  Color _dotColorForRemaining(double remaining) {
+    return remaining > 0
+        ? DashboardDesign.orange400
+        : DashboardDesign.green400;
   }
 
-  Widget _buildMessageCard(_MessageItem item) {
-    final dotColor = _dotColorForStatus(item.status);
+  Widget _buildLoanMessageCard(Loan loan) {
+    final dotColor = _dotColorForRemaining(loan.remaining);
+    final title = loan.caseName ?? '貸款 #${loan.id}';
+    final subtitle = loan.storeName;
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(DashboardDesign.radiusXl),
@@ -508,7 +489,7 @@ class _DashboardViewState extends State<DashboardView> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      item.title,
+                      title,
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: DashboardDesign.fontSizeSm,
@@ -517,20 +498,22 @@ class _DashboardViewState extends State<DashboardView> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      item.content,
+                      subtitle,
                       style: TextStyle(
                         color: DashboardDesign.textBlue200,
                         fontSize: DashboardDesign.fontSizeXs,
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      item.date,
-                      style: TextStyle(
-                        color: DashboardDesign.textBlue300,
-                        fontSize: DashboardDesign.fontSizeXs,
+                    if (loan.remaining >= 0) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        '餘額 ${_currencyFormat.format(loan.remaining)}',
+                        style: TextStyle(
+                          color: DashboardDesign.textBlue300,
+                          fontSize: DashboardDesign.fontSizeXs,
+                        ),
                       ),
-                    ),
+                    ],
                   ],
                 ),
               ),
@@ -540,18 +523,4 @@ class _DashboardViewState extends State<DashboardView> {
       ),
     );
   }
-}
-
-class _MessageItem {
-  final MessageStatus status;
-  final String title;
-  final String content;
-  final String date;
-
-  _MessageItem({
-    required this.status,
-    required this.title,
-    required this.content,
-    required this.date,
-  });
 }

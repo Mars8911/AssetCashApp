@@ -1,8 +1,7 @@
-// lib/views/home_view.dart — 首頁／導航入口（保留 API 邏輯，成功後顯示新設計 DashboardView）
 import 'package:flutter/material.dart';
-import '../models/loan_summary.dart';
-import '../services/api_service.dart';
 import 'dashboard_view.dart';
+import 'member_center_view.dart';
+import 'notifications_view.dart';
 
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
@@ -12,69 +11,53 @@ class HomeView extends StatefulWidget {
 }
 
 class _HomeViewState extends State<HomeView> {
-  // 初始化 API 服務
-  final ApiService _apiService = ApiService();
+  int _selectedIndex = 0; // 用來記錄目前點到哪一格
 
-  // 用於存儲非同步抓取的資料狀態
-  late Future<LoanSummary> _loanSummaryFuture;
-
-  @override
-  void initState() {
-    super.initState();
-    // 頁面一載入就開始抓資料
-    _loanSummaryFuture = _apiService.fetchDashboardSummary();
-  }
+  // 1. 定義分頁列表：首頁、會員中心(借貸資訊)、推播、設定
+  final List<Widget> _pages = [
+    const DashboardView(),
+    const MemberCenterView(),
+    const NotificationsView(),
+    const Center(
+      child: Text('設定', style: TextStyle(color: Colors.white, fontSize: 24)),
+    ),
+  ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0D1117), // 深色背景
-      body: SafeArea(
-        child: FutureBuilder<LoanSummary>(
-          future: _loanSummaryFuture,
-          builder: (context, snapshot) {
-            // 狀態 1：資料載入中 (顯示旋轉進度條)
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(
-                child: CircularProgressIndicator(color: Colors.blue),
-              );
-            }
+      backgroundColor: const Color(0xFF0D1117), // 保持深色背景
+      // 2. 主體內容：根據選中的索引顯示對應頁面
+      body: _pages[_selectedIndex],
 
-            // 狀態 2：連線發生錯誤 (例如 Docker 沒開)
-            if (snapshot.hasError) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.error_outline,
-                      color: Colors.red,
-                      size: 60,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      '${snapshot.error}',
-                      style: const TextStyle(color: Colors.white70),
-                    ),
-                    ElevatedButton(
-                      onPressed: () {
-                        // 重新嘗試抓取
-                        setState(() {
-                          _loanSummaryFuture = _apiService
-                              .fetchDashboardSummary();
-                        });
-                      },
-                      child: const Text('重試'),
-                    ),
-                  ],
-                ),
-              );
-            }
-
-            // 狀態 3：成功抓到資料 → 顯示新設計的 DashboardView（磨砂玻璃、設計稿樣式）
-            return DashboardView(summary: snapshot.data);
-          },
-        ),
+      // 3. 底部導航欄：這就是你消失的那四格
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex, // 目前選中的 Index
+        onTap: (index) {
+          setState(() {
+            _selectedIndex = index; // 點擊時更新 Index，畫面會自動重繪
+          });
+        },
+        type: BottomNavigationBarType.fixed, // 確保四個按鈕寬度平均分配
+        backgroundColor: const Color(0xFF161B22), // 導航欄深色背景
+        selectedItemColor: Colors.blueAccent, // 選中時變藍色
+        unselectedItemColor: Colors.grey, // 未選中灰色
+        showUnselectedLabels: true, // 顯示未選中的標籤文字
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home_filled), label: '首頁訊息'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_outline),
+            label: '會員中心',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.notifications_none),
+            label: '推播通知',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.settings_outlined),
+            label: '設定',
+          ),
+        ],
       ),
     );
   }

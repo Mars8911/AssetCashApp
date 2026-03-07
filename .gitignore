@@ -1,0 +1,57 @@
+# ==========================================
+# 系統與 IDE 雜物
+# ==========================================
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.log
+.env
+
+# ==========================================
+# Laravel 後端相關 (backend-laravel)
+# ==========================================
+/backendweb//vendor/
+/backendweb//node_modules/
+/backendweb//public/storage
+/backendweb//public/hot
+/backendweb//storage/*.key
+/backendweb//.env
+/backendweb//.env.backup
+/backendweb//bootstrap/cache/*
+/backendweb//npm-debug.log
+/backendweb//auth_p12.keystore
+
+# ==========================================
+# Flutter 前端相關 (frontend-flutter)
+# ==========================================
+/frontend-flutter/.dart_tool/
+/frontend-flutter/.flutter-plugins
+/frontend-flutter/.flutter-plugins-dependencies
+/frontend-flutter/.packages
+/frontend-flutter/.pub-cache/
+/frontend-flutter/.pub/
+/frontend-flutter/build/
+
+# Android 特定產出
+/frontend-flutter/android/app/debug/
+/frontend-flutter/android/app/profile/
+/frontend-flutter/android/app/release/
+/frontend-flutter/android/local.properties
+/frontend-flutter/android/**/generated/
+/frontend-flutter/android/app/*.keystore
+/frontend-flutter/android/app/*.jks
+
+# iOS 特定產出
+/frontend-flutter/ios/Pods/
+/frontend-flutter/ios/.generated/
+/frontend-flutter/ios/Flutter/Generated.xcconfig
+/frontend-flutter/ios/Flutter/flutter_export_environment.sh
+/frontend-flutter/ios/ServiceDefinitions.json
+/frontend-flutter/ios/Runner/GeneratedPluginRegistrant.[mh]
+
+# ==========================================
+# Docker 相關
+# ==========================================
+/docker-config/mysql_data/

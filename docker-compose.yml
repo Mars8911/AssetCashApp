@@ -1,0 +1,72 @@
+services:
+  # 1. Laravel API 伺服器 (PHP-FPM)
+  app:
+    build:
+      context: ./backendweb
+      dockerfile: ../docker-config/php.dockerfile # 我們稍後建立這個
+    container_name: tracking-app-server
+    restart: unless-stopped
+    working_dir: /var/www
+    volumes:
+      - ./backendweb:/var/www
+    networks:
+      - tracking-network
+
+  # 2. Nginx 網頁伺服器 (負責轉發請求)
+  web:
+    image: nginx:alpine
+    container_name: tracking-nginx
+    ports:
+      - "8000:80" # 你可以透過 http://localhost:8000 存取 API
+    volumes:
+      - ./backendweb:/var/www
+      - ./docker-config/nginx.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - app
+    networks:
+      - tracking-network
+
+  # 3. MySQL 8 資料庫services:
+  # 你原有的 db 服務
+  db:
+    image: mysql:8.0
+    container_name: tracking-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: tracking_db
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3306:3306"
+    volumes:
+      - dbdata:/var/lib/mysql
+    networks:
+      - tracking-network
+
+  # 新增 phpMyAdmin 服務
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: tracking-phpmyadmin
+    restart: always
+    ports:
+      - "8081:80" # 這樣你就能透過 http://localhost:8081 進入
+    environment:
+      # 重要：這裡的 PMA_HOST 必須對應上面 db 服務的 container_name 或服務名稱
+      - PMA_HOST=tracking-mysql 
+      - PMA_PORT=3306
+      - MYSQL_ROOT_PASSWORD=root
+    networks:
+      - tracking-network
+
+  # 4. Redis (定位數據的高速緩衝)
+  redis:
+    image: redis:alpine
+    container_name: tracking-redis
+    networks:
+      - tracking-network
+
+networks:
+  tracking-network:
+    driver: bridge
+
+volumes:
+  dbdata:

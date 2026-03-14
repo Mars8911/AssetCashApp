@@ -15,6 +15,9 @@
         <li v-if="user?.role === 'super_admin'" class="nav-item">
           <router-link to="/admins" class="nav-link" active-class="active">管理者管理</router-link>
         </li>
+        <li v-if="user?.role === 'super_admin'" class="nav-item">
+          <router-link to="/stores" class="nav-link" active-class="active">店家管理</router-link>
+        </li>
       </ul>
     </nav>
 

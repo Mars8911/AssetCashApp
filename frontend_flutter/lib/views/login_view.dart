@@ -1,9 +1,11 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'home_view.dart';
 import 'register_view.dart';
 import 'forgot_password_view.dart';
 import '../services/api_service.dart';
+import '../providers/auth_provider.dart';
 
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
@@ -58,11 +60,21 @@ class _LoginViewState extends State<LoginView> {
     setState(() => _isLoggingIn = true);
 
     try {
-      await _api.login(
+      final res = await _api.login(
         email: email,
         password: password,
       );
       if (mounted) {
+        final auth = context.read<AuthProvider>();
+        final user = res['user'] as Map<String, dynamic>?;
+        if (user != null && res['token'] != null) {
+          await auth.setAuth(
+            token: res['token'] as String,
+            userId: user['id'] as int,
+            name: user['name'] as String,
+            email: user['email'] as String,
+          );
+        }
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const HomeView()),

@@ -19,6 +19,7 @@ class PushNotificationController extends Controller
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:100'],
             'body' => ['required', 'string', 'max:500'],
+            'category' => ['required', 'string', 'in:payment,success,announcement,activity,membership,other'],
             'target_type' => ['required', 'in:all,single'],
             'user_id' => ['required_if:target_type,single', 'nullable', 'integer', 'exists:users,id'],
         ]);
@@ -58,6 +59,7 @@ class PushNotificationController extends Controller
                     'user_id' => $user->id,
                     'title' => $validated['title'],
                     'body' => $validated['body'],
+                    'category' => $validated['category'],
                     'target_type' => $validated['target_type'],
                 ]);
             }

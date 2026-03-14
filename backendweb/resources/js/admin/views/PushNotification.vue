@@ -48,6 +48,18 @@
                 </div>
 
                 <div class="mb-3">
+                  <label class="form-label">通知類別 <span class="text-danger">*</span></label>
+                  <select v-model="form.category" class="form-select" required>
+                    <option value="payment">繳款提醒</option>
+                    <option value="success">付款成功通知</option>
+                    <option value="announcement">公告訊息</option>
+                    <option value="activity">活動優惠</option>
+                    <option value="membership">會員制度</option>
+                    <option value="other">其他</option>
+                  </select>
+                </div>
+
+                <div class="mb-3">
                   <label class="form-label">標題 <span class="text-danger">*</span></label>
                   <input
                     v-model="form.title"
@@ -122,6 +134,7 @@ export default {
       targetType: 'all',
       selectedUserId: '',
       form: {
+        category: 'announcement',
         title: '',
         body: '',
       },
@@ -164,6 +177,7 @@ export default {
         const payload = {
           title: this.form.title.trim(),
           body: this.form.body.trim(),
+          category: this.form.category,
           target_type: this.targetType,
           user_id: this.targetType === 'single' ? parseInt(this.selectedUserId, 10) : null,
         };
@@ -191,6 +205,7 @@ export default {
       }
     },
     resetForm() {
+      this.form.category = 'announcement';
       this.form.title = '';
       this.form.body = '';
     },

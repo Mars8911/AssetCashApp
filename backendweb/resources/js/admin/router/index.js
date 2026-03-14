@@ -46,6 +46,12 @@ export default [
     meta: { requiresAuth: true, requiresSuperAdmin: true },
   },
   {
+    path: '/stores',
+    name: 'Stores',
+    component: () => import('../views/StoresList.vue'),
+    meta: { requiresAuth: true, requiresSuperAdmin: true },
+  },
+  {
     path: '/:pathMatch(.*)*',
     redirect: '/dashboard',
   },

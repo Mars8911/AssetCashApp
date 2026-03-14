@@ -7,7 +7,15 @@ use Illuminate\Database\Eloquent\Model;
 class Store extends Model
 {
     // 允許批量寫入的欄位
-    protected $fillable = ['name', 'branch_name'];
+    protected $fillable = ['name', 'branch_name', 'phone', 'address', 'logo'];
+
+    protected $appends = ['logo_url'];
+
+    /** 取得 logo 完整 URL（無則回傳 null） */
+    public function getLogoUrlAttribute(): ?string
+    {
+        return $this->logo ? asset('storage/' . $this->logo) : null;
+    }
     // 定義關聯：一家店有很多貸款案
     public function loans()
     {

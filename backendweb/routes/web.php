@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\LoanController;
 use App\Http\Controllers\Admin\LoanRepaymentController;
 use App\Http\Controllers\Admin\PushNotificationController;
 use App\Http\Controllers\Admin\AdminController;
+use App\Http\Controllers\Admin\StoreController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -31,13 +32,18 @@ Route::prefix('api/admin')->middleware(['web', 'auth', 'admin'])->group(function
     Route::delete('repayments/{id}', [LoanRepaymentController::class, 'destroy']);
     Route::post('push-notifications/send', [PushNotificationController::class, 'send']);
 
-    // 管理者管理（僅 super_admin 可存取）
+    // 管理者管理、店家管理（僅 super_admin 可存取）
     Route::middleware('super_admin')->group(function () {
         Route::get('admins', [AdminController::class, 'index']);
         Route::get('admins/stores/list', [AdminController::class, 'stores']);
         Route::post('admins', [AdminController::class, 'store']);
         Route::put('admins/{id}', [AdminController::class, 'update']);
         Route::delete('admins/{id}', [AdminController::class, 'destroy']);
+
+        Route::get('stores', [StoreController::class, 'index']);
+        Route::post('stores', [StoreController::class, 'store']);
+        Route::put('stores/{id}', [StoreController::class, 'update']);
+        Route::delete('stores/{id}', [StoreController::class, 'destroy']);
     });
 });
 

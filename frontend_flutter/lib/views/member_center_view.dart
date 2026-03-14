@@ -482,10 +482,6 @@ class _MemberCenterViewState extends State<MemberCenterView> {
 
   /// 總借貸筆數、總月繳金額 兩張並排卡片
   Widget _buildSummaryCards() {
-    final totalMonthly = _totalMonthlyPayment > 0
-        ? _totalMonthlyPayment
-        : 163115.0; // 設計稿範例值，當 API 無月還款時使用
-
     return Row(
       children: [
         Expanded(
@@ -499,7 +495,7 @@ class _MemberCenterViewState extends State<MemberCenterView> {
         Expanded(
           child: _buildSummaryCard(
             label: '總月繳金額',
-            value: _currencyFormat.format(totalMonthly),
+            value: _currencyFormat.format(_totalMonthlyPayment),
             isBlue: false,
           ),
         ),

@@ -12,8 +12,16 @@ class PushNotificationLog extends Model
         'user_id',
         'title',
         'body',
+        'category',
         'target_type',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'read_at' => 'datetime',
+        ];
+    }
 
     public function admin(): BelongsTo
     {

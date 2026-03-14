@@ -2,15 +2,21 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 
 import '../constants/dashboard_design.dart';
+import '../providers/auth_provider.dart';
+import '../services/api_service.dart';
 
-/// 通知類別
+/// 通知類別（與後端 PushNotificationController 類別一致）
 enum NotificationCategory {
   all('all', '全部通知'),
   payment('payment', '繳款提醒'),
+  success('success', '付款成功通知'),
   announcement('announcement', '公告訊息'),
-  activity('activity', '活動優惠');
+  activity('activity', '活動優惠'),
+  membership('membership', '會員制度'),
+  other('other', '其他');
 
   const NotificationCategory(this.id, this.label);
   final String id;
@@ -57,68 +63,65 @@ class _NotificationsViewState extends State<NotificationsView> {
   static const Color _red500 = Color(0xFFEF4444);
   static const Color _red300 = Color(0xFFFCA5A5);
 
-  late List<NotificationItem> _notifications;
+  List<NotificationItem> _notifications = [];
+  bool _loading = true;
+  final ApiService _api = ApiService();
 
   @override
   void initState() {
     super.initState();
-    _notifications = [
-    NotificationItem(
-      id: 1,
-      subject: '繳款提醒',
-      description: '您本月的還款日為 2026/03/05，請準時繳款以避免產生額外費用',
-      validPeriod: '2026/03/01 - 2026/03/05',
-      category: 'payment',
-      icon: Icons.credit_card_rounded,
-      isRead: false,
-      detailContent: '親愛的王小明會員，您好！本月應繳金額為 NT\$172,615，繳款日期為每月 5 日。',
-      relatedInfo: ['應繳總額：NT\$172,615', '繳款日期：2026/03/05'],
-    ),
-    NotificationItem(
-      id: 2,
-      subject: '付款成功通知',
-      description: '您於 2026/02/20 的繳款已成功處理，感謝您的準時繳款',
-      validPeriod: '2026/02/20',
-      category: 'success',
-      icon: Icons.check_circle_rounded,
-      isRead: false,
-      detailContent: '感謝您準時完成繳款！您於 2026/02/20 15:30 透過網路銀行轉帳繳款 NT\$172,615 已成功入帳。',
-      relatedInfo: ['繳款金額：NT\$172,615', '繳款時間：2026/02/20 15:30'],
-    ),
-    NotificationItem(
-      id: 3,
-      subject: '店家公告',
-      description: 'A店家將於 2026/03/10-12 進行系統維護，部分服務暫停',
-      validPeriod: '2026/03/10 - 2026/03/12',
-      category: 'announcement',
-      icon: Icons.campaign_rounded,
-      isRead: true,
-      detailContent: 'A店家預定於 2026 年 3 月 10 日至 12 日進行系統升級維護作業。',
-      relatedInfo: ['維護時間：2026/03/10 00:00 - 03/12 23:59'],
-    ),
-    NotificationItem(
-      id: 4,
-      subject: '活動訊息',
-      description: '新春特惠活動開跑！3月份準時繳款享 500 元現金回饋',
-      validPeriod: '2026/03/01 - 2026/03/31',
-      category: 'activity',
-      icon: Icons.celebration_rounded,
-      isRead: false,
-      detailContent: '為感謝會員長期支持，A店家推出新春特惠活動！',
-      relatedInfo: ['活動期間：2026/03/01 - 03/31', '回饋金額：NT\$500'],
-    ),
-    NotificationItem(
-      id: 5,
-      subject: '優質會員制度',
-      description: '恭喜！您已符合優質會員資格，享有專屬優惠與服務',
-      validPeriod: '長期有效',
-      category: 'membership',
-      icon: Icons.workspace_premium_rounded,
-      isRead: true,
-      detailContent: '親愛的王小明會員，感謝您長期保持良好的還款紀錄！',
-      relatedInfo: ['利率優惠：降低 0.5% - 1%', '優先審核：新申請案件優先處理'],
-    ),
-  ];
+    _fetchNotifications();
+  }
+
+  Future<void> _fetchNotifications() async {
+    final auth = context.read<AuthProvider>();
+    if (auth.token == null) {
+      setState(() {
+        _notifications = [];
+        _loading = false;
+      });
+      return;
+    }
+    setState(() => _loading = true);
+    final list = await _api.fetchNotifications(auth.token!);
+    if (mounted) {
+      setState(() {
+        _notifications = list.map(_mapToNotificationItem).toList();
+        _loading = false;
+      });
+    }
+  }
+
+  NotificationItem _mapToNotificationItem(Map<String, dynamic> json) {
+    final category = json['category'] as String? ?? 'other';
+    return NotificationItem(
+      id: json['id'] as int,
+      subject: json['subject'] as String? ?? '',
+      description: json['description'] as String? ?? '',
+      validPeriod: json['valid_period'] as String? ?? '',
+      category: category,
+      icon: _iconForCategory(category),
+      isRead: json['is_read'] as bool? ?? false,
+      detailContent: json['description'] as String?,
+      relatedInfo: null,
+    );
+  }
+
+  IconData _iconForCategory(String category) {
+    switch (category) {
+      case 'payment':
+        return Icons.credit_card_rounded;
+      case 'success':
+        return Icons.check_circle_rounded;
+      case 'announcement':
+        return Icons.campaign_rounded;
+      case 'activity':
+        return Icons.celebration_rounded;
+      case 'membership':
+        return Icons.workspace_premium_rounded;
+      default:
+        return Icons.notifications_rounded;
+    }
   }
 
   List<NotificationItem> get _filteredNotifications {
@@ -153,7 +156,13 @@ class _NotificationsViewState extends State<NotificationsView> {
   }
 
   void _onNotificationTap(NotificationItem notif) {
-    _markAsRead(notif.id);
+    if (!notif.isRead) {
+      final auth = context.read<AuthProvider>();
+      if (auth.token != null) {
+        _api.markNotificationAsRead(auth.token!, notif.id);
+      }
+      _markAsRead(notif.id);
+    }
     setState(() => _selectedNotif = notif);
   }
 
@@ -175,25 +184,32 @@ class _NotificationsViewState extends State<NotificationsView> {
                   _buildHeader(),
                   _buildTabs(),
                   Expanded(
-                    child: ListView(
-                      padding: const EdgeInsets.fromLTRB(
-                        DashboardDesign.spacing4,
-                        DashboardDesign.spacing4,
-                        DashboardDesign.spacing4,
-                        80,
-                      ),
-                      children: [
-                        ..._filteredNotifications.map(
-                          (n) => Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: _buildNotificationCard(n),
+                    child: _loading
+                        ? const Center(child: CircularProgressIndicator())
+                        : RefreshIndicator(
+                            onRefresh: _fetchNotifications,
+                            child: ListView(
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              padding: const EdgeInsets.fromLTRB(
+                                DashboardDesign.spacing4,
+                                DashboardDesign.spacing4,
+                                DashboardDesign.spacing4,
+                                80,
+                              ),
+                              children: [
+                                ..._filteredNotifications.map(
+                                  (n) => Padding(
+                                    padding: const EdgeInsets.only(bottom: 12),
+                                    child: _buildNotificationCard(n),
+                                  ),
+                                ),
+                                if (_filteredNotifications.isEmpty)
+                                  _buildEmptyState(),
+                                const SizedBox(height: 24),
+                                _buildNoticeSection(),
+                              ],
+                            ),
                           ),
-                        ),
-                        if (_filteredNotifications.isEmpty) _buildEmptyState(),
-                        const SizedBox(height: 24),
-                        _buildNoticeSection(),
-                      ],
-                    ),
                   ),
                 ],
               ),

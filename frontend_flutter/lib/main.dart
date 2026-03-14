@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+import 'providers/auth_provider.dart';
 import 'views/login_view.dart';
+import 'views/home_view.dart';
 
 void main() {
   runApp(const MyApp());
@@ -11,15 +14,24 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false, // 去掉右上角的 Debug 旗標
-      title: 'TrackMe 風控系統',
-      theme: ThemeData(
-        // 強制使用 Google Fonts，質感瞬間提升
-        textTheme: GoogleFonts.notoSansTcTextTheme(),
-        brightness: Brightness.dark, // 因為圖片是深色的，我們用暗色模式
+    return ChangeNotifierProvider(
+      create: (_) => AuthProvider(),
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'TrackMe 風控系統',
+        theme: ThemeData(
+          textTheme: GoogleFonts.notoSansTcTextTheme(),
+          brightness: Brightness.dark,
+        ),
+        home: Consumer<AuthProvider>(
+          builder: (context, auth, _) {
+            if (auth.isLoggedIn) {
+              return const HomeView();
+            }
+            return const LoginView();
+          },
+        ),
       ),
-      home: const LoginView(),
     );
   }
 }

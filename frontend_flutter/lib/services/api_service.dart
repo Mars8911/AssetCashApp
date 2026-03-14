@@ -152,6 +152,49 @@ class ApiService {
     }
   }
 
+  /// 取得推播通知列表（需 Bearer Token）
+  Future<List<Map<String, dynamic>>> fetchNotifications(String token) async {
+    try {
+      final response = await _dio.get(
+        '$baseUrl/notifications',
+        options: Options(
+          headers: {'Authorization': 'Bearer $token'},
+        ),
+      );
+      if (response.statusCode == 200) {
+        final data = response.data['data'] as Map<String, dynamic>?;
+        final list = data?['notifications'] as List? ?? [];
+        return list
+            .map((e) => Map<String, dynamic>.from(e as Map<String, dynamic>))
+            .toList();
+      }
+      return [];
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401) return [];
+      print('API 推播通知失敗: $e');
+      return [];
+    } catch (e) {
+      print('API 推播通知失敗: $e');
+      return [];
+    }
+  }
+
+  /// 標記通知為已讀（需 Bearer Token）
+  Future<bool> markNotificationAsRead(String token, int id) async {
+    try {
+      final response = await _dio.post(
+        '$baseUrl/notifications/$id/read',
+        options: Options(
+          headers: {'Authorization': 'Bearer $token'},
+        ),
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      print('API 標記已讀失敗: $e');
+      return false;
+    }
+  }
+
   Future<LoanSummary> fetchDashboardSummary() async {
     try {
       // 呼叫你的 Laravel API 路由

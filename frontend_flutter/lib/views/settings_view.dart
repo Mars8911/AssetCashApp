@@ -2,8 +2,10 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 
 import '../constants/dashboard_design.dart';
+import '../providers/auth_provider.dart';
 
 /// 個人設定頁（對應 design_assets SettingsPage + 截圖設計稿）
 /// 包含：頂部個人卡片、個人資訊列表、安全設定、版本資訊
@@ -52,6 +54,8 @@ class SettingsView extends StatelessWidget {
                       _buildSectionTitle('安全設定'),
                       const SizedBox(height: 8),
                       _buildSecurityCard(context),
+                      const SizedBox(height: 12),
+                      _buildLogoutCard(context),
                       const SizedBox(height: 24),
                       _buildVersionFooter(),
                     ],
@@ -516,6 +520,60 @@ class SettingsView extends StatelessWidget {
 
   void _onChangePasswordTap(BuildContext context) {
     // TODO: 開啟更改密碼對話框或頁面
+  }
+
+  Widget _buildLogoutCard(BuildContext context) {
+    return _buildFrostedCard(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () async {
+            final ok = await showDialog<bool>(
+              context: context,
+              builder: (ctx) => AlertDialog(
+                title: const Text('確認登出'),
+                content: const Text('確定要登出帳號嗎？'),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(ctx, false),
+                    child: const Text('取消'),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.pop(ctx, true),
+                    child: const Text('登出'),
+                  ),
+                ],
+              ),
+            );
+            if (ok == true && context.mounted) {
+              await context.read<AuthProvider>().logout();
+            }
+          },
+          borderRadius: BorderRadius.circular(DashboardDesign.radius2xl),
+          child: Padding(
+            padding: const EdgeInsets.all(DashboardDesign.spacing4),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.logout_rounded,
+                  color: DashboardDesign.textBlue300,
+                  size: 24,
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  '登出',
+                  style: GoogleFonts.notoSansTc(
+                    color: Colors.white,
+                    fontSize: DashboardDesign.fontSizeSm,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 

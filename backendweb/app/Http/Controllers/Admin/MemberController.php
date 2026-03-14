@@ -48,11 +48,14 @@ class MemberController extends Controller
     }
 
     /**
-     * 更新會員資訊
+     * 更新會員資訊（股東僅可檢視，不可編輯）
      */
     public function update(Request $request, int $id): JsonResponse
     {
         $admin = $request->user();
+        if ($admin->isShareholder()) {
+            return response()->json(['message' => '股東管理者僅可檢視會員資訊，不可編輯'], 403);
+        }
         $member = User::where('role', 'member')->findOrFail($id);
 
         if ($admin->isStoreManager() && $member->store_id !== $admin->store_id) {

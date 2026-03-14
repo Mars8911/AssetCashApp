@@ -35,6 +35,12 @@ class SaasSeeder extends Seeder
             ['branch_name' => '台中分店']
         );
 
+        // 2a. 股東管理者（可查看全店數據，不可管理其他管理者）
+        \App\Models\User::updateOrCreate(
+            ['email' => 'shareholder@trackme.com'],
+            ['name' => '張股東', 'password' => 'password', 'role' => 'shareholder']
+        );
+
         // 2b. 店家管理者 (歸屬 A 店家)
         \App\Models\User::updateOrCreate(
             ['email' => 'store@trackme.com'],

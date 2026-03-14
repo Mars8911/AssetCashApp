@@ -33,7 +33,7 @@ class AuthController extends Controller
         if (! $user->isAdmin()) {
             Auth::logout();
             throw ValidationException::withMessages([
-                'email' => ['此帳號無權限登入管理後台，僅限超級管理者與店家管理者。'],
+                'email' => ['此帳號無權限登入管理後台，僅限管理者身份。'],
             ]);
         }
 

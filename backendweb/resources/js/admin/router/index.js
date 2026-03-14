@@ -37,7 +37,13 @@ export default [
     path: '/push-notifications',
     name: 'PushNotifications',
     component: () => import('../views/PushNotification.vue'),
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: true, requiresNotShareholder: true },
+  },
+  {
+    path: '/admins',
+    name: 'Admins',
+    component: () => import('../views/AdminsList.vue'),
+    meta: { requiresAuth: true, requiresSuperAdmin: true },
   },
   {
     path: '/:pathMatch(.*)*',

@@ -11,11 +11,14 @@ use Illuminate\Validation\Rule;
 class LoanController extends Controller
 {
     /**
-     * 新增貸款案件
+     * 新增貸款案件（股東僅可檢視，不可編輯）
      */
     public function store(Request $request, int $memberId): JsonResponse
     {
         $admin = $request->user();
+        if ($admin->isShareholder()) {
+            return response()->json(['message' => '股東管理者僅可檢視會員資訊，不可編輯'], 403);
+        }
         $member = \App\Models\User::where('role', 'member')->findOrFail($memberId);
 
         if ($admin->isStoreManager() && $member->store_id !== $admin->store_id) {
@@ -44,11 +47,14 @@ class LoanController extends Controller
     }
 
     /**
-     * 更新貸款案件（店長可編輯）
+     * 更新貸款案件（股東僅可檢視，不可編輯）
      */
     public function update(Request $request, int $id): JsonResponse
     {
         $admin = $request->user();
+        if ($admin->isShareholder()) {
+            return response()->json(['message' => '股東管理者僅可檢視會員資訊，不可編輯'], 403);
+        }
         $loan = Loan::with('store')->findOrFail($id);
 
         if ($admin->isStoreManager() && $loan->store_id !== $admin->store_id) {
@@ -74,11 +80,14 @@ class LoanController extends Controller
     }
 
     /**
-     * 刪除貸款案件
+     * 刪除貸款案件（股東僅可檢視，不可編輯）
      */
     public function destroy(Request $request, int $id): JsonResponse
     {
         $admin = $request->user();
+        if ($admin->isShareholder()) {
+            return response()->json(['message' => '股東管理者僅可檢視會員資訊，不可編輯'], 403);
+        }
         $loan = Loan::findOrFail($id);
 
         if ($admin->isStoreManager() && $loan->store_id !== $admin->store_id) {

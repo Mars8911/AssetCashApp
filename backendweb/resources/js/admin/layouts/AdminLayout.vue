@@ -9,8 +9,11 @@
         <li class="nav-item">
           <router-link to="/members" class="nav-link" active-class="active">會員資訊</router-link>
         </li>
-        <li class="nav-item">
+        <li v-if="user?.role !== 'shareholder'" class="nav-item">
           <router-link to="/push-notifications" class="nav-link" active-class="active">訊息推播管理</router-link>
+        </li>
+        <li v-if="user?.role === 'super_admin'" class="nav-item">
+          <router-link to="/admins" class="nav-link" active-class="active">管理者管理</router-link>
         </li>
       </ul>
     </nav>
@@ -25,17 +28,21 @@
             <span class="navbar-text me-auto">
               <span
                 class="badge me-2"
-                :class="user?.role === 'super_admin' ? 'bg-danger' : 'bg-primary'"
+                :class="roleBadgeClass(user?.role)"
               >
-                {{ user?.role === 'super_admin' ? '超級管理者' : '店家管理者' }}
+                {{ roleLabel(user?.role) }}
               </span>
               {{ user?.name }}
               <small v-if="user?.store" class="text-muted">({{ user.store.name }})</small>
             </span>
-            <form method="POST" action="/admin/logout" class="d-inline">
-              <input type="hidden" name="_token" :value="csrfToken" />
-              <button type="submit" class="btn btn-outline-secondary btn-sm">登出</button>
-            </form>
+            <button
+              type="button"
+              class="btn btn-outline-secondary btn-sm"
+              :disabled="loggingOut"
+              @click="handleLogout"
+            >
+              {{ loggingOut ? '登出中...' : '登出' }}
+            </button>
           </div>
         </div>
       </nav>
@@ -59,7 +66,43 @@ export default {
   data() {
     return {
       csrfToken: '',
+      loggingOut: false,
     };
+  },
+  methods: {
+    async handleLogout() {
+      if (this.loggingOut) return;
+      this.loggingOut = true;
+      try {
+        const res = await fetch('/admin/logout', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': this.csrfToken || document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+            Accept: 'application/json',
+          },
+          credentials: 'same-origin',
+        });
+        // 419 表示 session 已過期，直接導向登入頁
+        if (res.status === 419 || res.ok) {
+          window.location.href = '/admin/login';
+          return;
+        }
+      } catch (e) {
+        console.error(e);
+      } finally {
+        this.loggingOut = false;
+      }
+      window.location.href = '/admin/login';
+    },
+    roleLabel(role) {
+      const map = { super_admin: '最高權限管理者', shareholder: '股東管理', store_manager: '店長管理' };
+      return map[role] || role || '';
+    },
+    roleBadgeClass(role) {
+      const map = { super_admin: 'bg-danger', shareholder: 'bg-warning text-dark', store_manager: 'bg-primary' };
+      return map[role] || 'bg-secondary';
+    },
   },
   mounted() {
     this.csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';

@@ -26,6 +26,13 @@ router.beforeEach(async (to, from, next) => {
     try {
       const res = await fetch('/api/admin/user', { credentials: 'same-origin' });
       if (!res.ok) return next({ path: '/login', query: { redirect: to.fullPath } });
+      const data = await res.json();
+      if (to.meta.requiresSuperAdmin && data?.role !== 'super_admin') {
+        return next({ path: '/dashboard' });
+      }
+      if (to.meta.requiresNotShareholder && data?.role === 'shareholder') {
+        return next({ path: '/dashboard' });
+      }
     } catch {
       return next({ path: '/login' });
     }

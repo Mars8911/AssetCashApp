@@ -24,6 +24,9 @@ class PushNotificationController extends Controller
         ]);
 
         $admin = $request->user();
+        if ($admin->isShareholder()) {
+            return response()->json(['message' => '股東管理者無權限發送推播'], 403);
+        }
         $query = User::where('role', 'member');
 
         if ($admin->isStoreManager()) {

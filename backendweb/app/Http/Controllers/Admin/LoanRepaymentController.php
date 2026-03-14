@@ -27,11 +27,14 @@ class LoanRepaymentController extends Controller
     }
 
     /**
-     * 新增還款
+     * 新增還款（股東僅可檢視，不可編輯）
      */
     public function store(Request $request, int $loanId): JsonResponse
     {
         $admin = $request->user();
+        if ($admin->isShareholder()) {
+            return response()->json(['message' => '股東管理者僅可檢視會員資訊，不可編輯'], 403);
+        }
         $loan = Loan::findOrFail($loanId);
 
         if ($admin->isStoreManager() && $loan->store_id !== $admin->store_id) {
@@ -51,11 +54,14 @@ class LoanRepaymentController extends Controller
     }
 
     /**
-     * 刪除還款
+     * 刪除還款（股東僅可檢視，不可編輯）
      */
     public function destroy(Request $request, int $id): JsonResponse
     {
         $admin = $request->user();
+        if ($admin->isShareholder()) {
+            return response()->json(['message' => '股東管理者僅可檢視會員資訊，不可編輯'], 403);
+        }
         $repayment = LoanRepayment::with('loan')->findOrFail($id);
 
         if ($admin->isStoreManager() && $repayment->loan->store_id !== $admin->store_id) {

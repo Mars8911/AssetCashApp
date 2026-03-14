@@ -11,6 +11,7 @@
       <div v-if="loading" class="text-center py-5">載入中...</div>
 
       <template v-else-if="member">
+        <div v-if="isReadOnly" class="alert alert-info py-2 mb-3">股東管理者：僅可檢視會員資訊，不可編輯。</div>
         <form @submit.prevent="handleSave">
           <!-- 會員等級與積分 -->
           <div class="card border-0 shadow-sm mb-4">
@@ -21,7 +22,7 @@
               <div class="row g-3">
                 <div class="col-md-4">
                   <label class="form-label">會員等級</label>
-                  <select v-model="form.member_level" class="form-select">
+                  <select v-model="form.member_level" class="form-select" :disabled="isReadOnly">
                     <option value="一般">一般</option>
                     <option value="優質">優質</option>
                     <option value="VIP">VIP</option>
@@ -29,7 +30,7 @@
                 </div>
                 <div class="col-md-4">
                   <label class="form-label">積分</label>
-                  <input v-model.number="form.points" type="number" class="form-control" min="0" />
+                  <input v-model.number="form.points" type="number" class="form-control" min="0" :disabled="isReadOnly" />
                 </div>
               </div>
               <div class="mt-3 small text-muted">
@@ -47,27 +48,27 @@
               <div class="row g-3">
                 <div class="col-md-6">
                   <label class="form-label">客戶姓名</label>
-                  <input v-model="form.name" type="text" class="form-control" required />
+                  <input v-model="form.name" type="text" class="form-control" required :disabled="isReadOnly" />
                 </div>
                 <div class="col-md-6">
                   <label class="form-label">身分證字號</label>
-                  <input v-model="form.id_number" type="text" class="form-control" />
+                  <input v-model="form.id_number" type="text" class="form-control" :disabled="isReadOnly" />
                 </div>
                 <div class="col-md-6">
                   <label class="form-label">電話</label>
-                  <input v-model="form.phone" type="text" class="form-control" />
+                  <input v-model="form.phone" type="text" class="form-control" :disabled="isReadOnly" />
                 </div>
                 <div class="col-md-6">
                   <label class="form-label">地址</label>
-                  <input v-model="form.address" type="text" class="form-control" />
+                  <input v-model="form.address" type="text" class="form-control" :disabled="isReadOnly" />
                 </div>
                 <div class="col-md-6">
                   <label class="form-label">緊急連絡人</label>
-                  <input v-model="form.emergency_contact" type="text" class="form-control" />
+                  <input v-model="form.emergency_contact" type="text" class="form-control" :disabled="isReadOnly" />
                 </div>
                 <div class="col-md-6">
                   <label class="form-label">緊急連絡人電話</label>
-                  <input v-model="form.emergency_phone" type="text" class="form-control" />
+                  <input v-model="form.emergency_phone" type="text" class="form-control" :disabled="isReadOnly" />
                 </div>
               </div>
             </div>
@@ -77,13 +78,14 @@
           <div class="card border-0 shadow-sm mb-4">
             <div class="card-header bg-white d-flex justify-content-between align-items-center">
               <h5 class="mb-0">貸款案件</h5>
-              <button type="button" class="btn btn-primary btn-sm" @click="openAddLoanModal">新增案件</button>
+              <button v-if="!isReadOnly" type="button" class="btn btn-primary btn-sm" @click="openAddLoanModal">新增案件</button>
             </div>
             <div class="card-body">
               <div v-for="(loan, idx) in loanForms" :key="loan.id" class="loan-case-row border rounded p-3 mb-3">
                 <div class="d-flex justify-content-between align-items-start mb-3">
                   <span class="text-muted small">案件 #{{ loan.id }}</span>
                   <button
+                    v-if="!isReadOnly"
                     type="button"
                     class="btn btn-danger btn-sm"
                     @click="handleDeleteLoan(idx)"
@@ -105,7 +107,7 @@
                 <div class="row g-3 mb-3">
                   <div class="col-md-3">
                     <label class="form-label small text-muted">擔保品下拉選單</label>
-                    <select v-model="loan.collateral_type" class="form-select form-select-sm">
+                    <select v-model="loan.collateral_type" class="form-select form-select-sm" :disabled="isReadOnly">
                       <option value="">請選擇</option>
                       <option value="汽車">汽車</option>
                       <option value="機車">機車</option>
@@ -121,6 +123,7 @@
                       type="text"
                       class="form-control form-control-sm"
                       :placeholder="collateralPlaceholder(loan.collateral_type)"
+                      :disabled="isReadOnly"
                     />
                   </div>
                   <div class="col-md-2">
@@ -130,6 +133,7 @@
                       type="text"
                       class="form-control form-control-sm"
                       inputmode="numeric"
+                      :disabled="isReadOnly"
                       @input="loan.loan_amount = parseNumberInput($event.target.value)"
                     />
                   </div>
@@ -140,6 +144,7 @@
                       type="text"
                       class="form-control form-control-sm"
                       inputmode="numeric"
+                      :disabled="isReadOnly"
                       @input="loan.remaining_amount = parseNumberInput($event.target.value)"
                     />
                   </div>
@@ -150,7 +155,7 @@
                   <div class="col-md-2">
                     <label class="form-label small text-muted">利率 KEY 入</label>
                     <div class="input-group input-group-sm">
-                      <input v-model.number="loan.interest_rate" type="number" class="form-control" min="0" step="0.1" />
+                      <input v-model.number="loan.interest_rate" type="number" class="form-control" min="0" step="0.1" :disabled="isReadOnly" />
                       <span class="input-group-text">%</span>
                     </div>
                   </div>
@@ -166,7 +171,7 @@
                   </div>
                   <div class="col-md-3">
                     <label class="form-label small text-muted">利息收取</label>
-                    <select v-model="loan.interest_collection" class="form-select form-select-sm">
+                    <select v-model="loan.interest_collection" class="form-select form-select-sm" :disabled="isReadOnly">
                       <option value="">請選擇</option>
                       <option value="前扣">前扣</option>
                       <option value="後收">後收</option>
@@ -180,11 +185,12 @@
                       class="form-control form-control-sm"
                       min="0"
                       placeholder="個月"
+                      :disabled="isReadOnly"
                     />
                   </div>
                   <div class="col-md-2">
                     <label class="form-label small text-muted">還款日</label>
-                    <select v-model="loan.repayment_day" class="form-select form-select-sm">
+                    <select v-model="loan.repayment_day" class="form-select form-select-sm" :disabled="isReadOnly">
                       <option value="">請選擇</option>
                       <option value="30天一期">30天一期</option>
                       <option value="每月">每月指定日</option>
@@ -199,6 +205,7 @@
                       min="1"
                       max="31"
                       placeholder="日"
+                      :disabled="isReadOnly"
                     />
                   </div>
                   <!-- 本利攤專屬：期數 -->
@@ -210,6 +217,7 @@
                       class="form-control form-control-sm"
                       min="0"
                       placeholder="個月"
+                      :disabled="isReadOnly"
                     />
                   </div>
                   <!-- 本利攤專屬：綁約 -->
@@ -221,6 +229,7 @@
                       class="form-control form-control-sm"
                       min="0"
                       placeholder="個月"
+                      :disabled="isReadOnly"
                     />
                   </div>
                 </div>
@@ -229,7 +238,7 @@
                 <div class="mt-3 pt-3 border-top">
                   <div class="d-flex justify-content-between align-items-center mb-2">
                     <label class="form-label small fw-semibold mb-0">繳款明細</label>
-                    <button type="button" class="btn btn-outline-primary btn-sm" @click="openAddRepaymentModal(loan)">
+                    <button v-if="!isReadOnly" type="button" class="btn btn-outline-primary btn-sm" @click="openAddRepaymentModal(loan)">
                       新增還款
                     </button>
                   </div>
@@ -263,6 +272,7 @@
                           <td class="small">{{ r.notes || '-' }}</td>
                           <td>
                             <button
+                              v-if="!isReadOnly"
                               type="button"
                               class="btn btn-outline-danger btn-sm py-0"
                               @click="handleDeleteRepayment(loan, r)"
@@ -284,7 +294,8 @@
           </div>
 
           <div class="d-flex gap-2">
-            <button type="submit" class="btn btn-primary" :disabled="saving">{{ saving ? '儲存中...' : '儲存' }}</button>
+            <button v-if="!isReadOnly" type="submit" class="btn btn-primary" :disabled="saving">{{ saving ? '儲存中...' : '儲存' }}</button>
+            <router-link :to="`/members/${member.id}/location`" class="btn btn-outline-secondary">位置</router-link>
             <router-link to="/members" class="btn btn-outline-secondary">返回列表</router-link>
           </div>
         </form>
@@ -406,6 +417,11 @@ export default {
       addRepaymentLoan: null,
       addRepaymentForm: { amount: 0, payment_date: '', status: '', notes: '' },
     };
+  },
+  computed: {
+    isReadOnly() {
+      return this.user?.role === 'shareholder';
+    },
   },
   mounted() {
     this.fetchUser();

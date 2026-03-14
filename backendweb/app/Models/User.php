@@ -68,21 +68,38 @@ class User extends Authenticatable
         return $this->hasMany(Loan::class);
     }
 
-    /** 是否為超級管理者 */
+    /** 是否為最高權限管理者 */
     public function isSuperAdmin(): bool
     {
         return $this->role === 'super_admin';
     }
 
-    /** 是否為店家管理者 */
+    /** 是否為股東管理者 */
+    public function isShareholder(): bool
+    {
+        return $this->role === 'shareholder';
+    }
+
+    /** 是否為店長管理者 */
     public function isStoreManager(): bool
     {
         return $this->role === 'store_manager';
     }
 
-    /** 是否為管理員（超級或店家） */
+    /** 是否為管理員（super_admin / shareholder / store_manager） */
     public function isAdmin(): bool
     {
-        return in_array($this->role, ['super_admin', 'store_manager']);
+        return in_array($this->role, ['super_admin', 'shareholder', 'store_manager']);
+    }
+
+    /** 取得角色顯示名稱 */
+    public static function roleLabel(string $role): string
+    {
+        return match ($role) {
+            'super_admin' => '最高權限管理者',
+            'shareholder' => '股東管理',
+            'store_manager' => '店長管理',
+            default => $role,
+        };
     }
 }

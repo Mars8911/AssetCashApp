@@ -49,10 +49,10 @@ class RegisterResult {
 }
 
 class ApiService {
-  // 對於 Chrome 開發，使用 localhost
-  // 對於 Android 模擬器，需改為 10.0.2.2
-  // 對於實機，需改為電腦的局域網 IP (如 192.168.1.x)
-  final String baseUrl = "http://localhost:8000/api";
+  // iOS 模擬器 / 本機：127.0.0.1
+  // Android 模擬器：10.0.2.2
+  // 實機：電腦的局域網 IP (如 192.168.1.x)
+  static const String baseUrl = "http://127.0.0.1:8000/api";
   final Dio _dio = Dio();
 
   /// 取得店家列表（供註冊時選擇）
@@ -251,6 +251,25 @@ class ApiService {
     } catch (e) {
       print('API 標記已讀失敗: $e');
       return false;
+    }
+  }
+
+  /// 上傳定位至後端（需 Bearer Token）
+  Future<bool> updateLocation(String token, double lat, double lng) async {
+    try {
+      final response = await _dio.post(
+        '$baseUrl/locations',
+        data: {'latitude': lat, 'longitude': lng},
+        options: Options(
+          headers: {'Authorization': 'Bearer $token'},
+        ),
+      );
+      return response.statusCode == 201;
+    } on DioException catch (e) {
+      final msg = e.response?.data?['message'] ?? e.message ?? '連線失敗';
+      throw Exception('上傳失敗：$msg (${e.response?.statusCode})');
+    } catch (e) {
+      throw Exception('上傳失敗：$e');
     }
   }
 

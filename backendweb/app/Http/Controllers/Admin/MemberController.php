@@ -77,4 +77,29 @@ class MemberController extends Controller
 
         return response()->json(['message' => 'ok', 'member' => $member->fresh()]);
     }
+
+    /**
+     * 刪除會員（股東僅可檢視，不可刪除；有貸款案件者不可刪除）
+     */
+    public function destroy(Request $request, int $id): JsonResponse
+    {
+        $admin = $request->user();
+        if ($admin->isShareholder()) {
+            return response()->json(['message' => '股東管理者僅可檢視會員資訊，不可刪除'], 403);
+        }
+
+        $member = User::where('role', 'member')->findOrFail($id);
+
+        if ($admin->isStoreManager() && $member->store_id !== $admin->store_id) {
+            abort(403);
+        }
+
+        if ($member->loans()->exists()) {
+            return response()->json(['message' => '此會員尚有關聯的貸款案件，無法刪除'], 422);
+        }
+
+        $member->delete();
+
+        return response()->json(['message' => 'ok']);
+    }
 }

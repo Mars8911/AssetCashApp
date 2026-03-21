@@ -1,12 +1,16 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 
 import '../constants/dashboard_design.dart';
 import '../providers/auth_provider.dart';
 import '../services/api_service.dart';
+import '../services/location_service_stub.dart'
+    if (dart.library.io) '../services/location_service.dart';
 
 /// 個人設定頁（對應 design_assets SettingsPage + 截圖設計稿）
 /// 包含：頂部個人卡片、個人資訊列表、安全設定、版本資訊
@@ -78,6 +82,10 @@ class _SettingsViewState extends State<SettingsView> {
                           _buildSectionTitle('安全設定'),
                           const SizedBox(height: 8),
                           _buildSecurityCard(context),
+                          const SizedBox(height: 16),
+                          _buildSectionTitle('定位追蹤'),
+                          const SizedBox(height: 8),
+                          _buildLocationTrackingCard(context),
                           const SizedBox(height: 24),
                           _buildVersionFooter(),
                         ],
@@ -542,6 +550,10 @@ class _SettingsViewState extends State<SettingsView> {
     );
   }
 
+  Widget _buildLocationTrackingCard(BuildContext context) {
+    return _LocationTrackingCard();
+  }
+
   void _onChangePasswordTap(BuildContext context) {
     showDialog<void>(
       context: context,
@@ -847,6 +859,228 @@ class _ChangePasswordDialogState extends State<_ChangePasswordDialog> {
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// 定位追蹤開關卡片
+class _LocationTrackingCard extends StatefulWidget {
+  @override
+  State<_LocationTrackingCard> createState() => _LocationTrackingCardState();
+}
+
+class _LocationTrackingCardState extends State<_LocationTrackingCard> {
+  bool _isTracking = false;
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadState();
+  }
+
+  Future<void> _loadState() async {
+    final running = await isLocationServiceRunning();
+    if (mounted) setState(() => _isTracking = running);
+  }
+
+  Future<void> _requestPermissions() async {
+    final status = await Permission.locationWhenInUse.request();
+    if (status.isGranted) {
+      await Permission.locationAlways.request();
+    }
+    return;
+  }
+
+  Future<void> _toggleTracking() async {
+    if (_isLoading) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('請先開啟裝置的定位服務')),
+          );
+        }
+        return;
+      }
+
+      await _requestPermissions();
+
+      if (_isTracking) {
+        await stopLocationTracking();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('已停止定位追蹤')),
+          );
+        }
+      } else {
+        await startLocationTracking();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('已開啟定位追蹤，將在背景持續記錄位置')),
+          );
+        }
+      }
+      await _loadState();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('操作失敗：$e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _testUpload() async {
+    final auth = context.read<AuthProvider>();
+    final token = auth.token;
+    if (token == null || token.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('請先登入')),
+        );
+      }
+      return;
+    }
+    try {
+      final pos = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.medium,
+          timeLimit: Duration(seconds: 10),
+        ),
+      );
+      await ApiService().updateLocation(token, pos.latitude, pos.longitude);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('上傳成功！請重新整理後台頁面')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        final msg = e.toString().replaceFirst('Exception: ', '');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('失敗：$msg')),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _buildFrostedCard(
+      child: Padding(
+        padding: const EdgeInsets.all(DashboardDesign.spacing4),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFF3B82F6), Color(0xFF06B6D4)],
+                ),
+                borderRadius: BorderRadius.circular(DashboardDesign.radiusLg),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF3B82F6).withOpacity(0.3),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: const Icon(
+                Icons.location_on_outlined,
+                color: Colors.white,
+                size: 18,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '定位追蹤',
+                    style: GoogleFonts.notoSansTc(
+                      color: Colors.white,
+                      fontSize: DashboardDesign.fontSizeSm,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    _isTracking
+                        ? '已開啟，位置會即時上傳至後台'
+                        : '開啟後將即時上傳位置至後台',
+                    style: GoogleFonts.notoSansTc(
+                      color: DashboardDesign.textBlue300,
+                      fontSize: DashboardDesign.fontSizeXs,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+                if (_isLoading)
+                  const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                else
+                  Switch(
+                    value: _isTracking,
+                    onChanged: (_) => _toggleTracking(),
+                    activeColor: const Color(0xFF3B82F6),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            TextButton.icon(
+              onPressed: _testUpload,
+              icon: const Icon(Icons.location_searching, size: 18),
+              label: const Text('立即測試上傳'),
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.blue.shade300,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFrostedCard({required Widget child}) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(DashboardDesign.radius2xl),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(
+          sigmaX: DashboardDesign.blurXl,
+          sigmaY: DashboardDesign.blurXl,
+        ),
+        child: Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: DashboardDesign.white5,
+            borderRadius: BorderRadius.circular(DashboardDesign.radius2xl),
+            border: Border.all(
+              color: DashboardDesign.borderWhite10,
+              width: 1,
+            ),
+          ),
+          child: child,
         ),
       ),
     );

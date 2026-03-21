@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\ApiController as AdminApiController;
 use App\Http\Controllers\Admin\MemberController;
 use App\Http\Controllers\Admin\LoanController;
 use App\Http\Controllers\Admin\LoanRepaymentController;
+use App\Http\Controllers\Admin\LocationController as AdminLocationController;
 use App\Http\Controllers\Admin\PushNotificationController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\StoreController;
@@ -23,7 +24,9 @@ Route::prefix('api/admin')->middleware(['web', 'auth', 'admin'])->group(function
     Route::get('dashboard', [AdminApiController::class, 'dashboard']);
     Route::get('members', [MemberController::class, 'index']);
     Route::get('members/{id}', [MemberController::class, 'show']);
+    Route::get('members/{id}/locations', [AdminLocationController::class, 'index']);
     Route::put('members/{id}', [MemberController::class, 'update']);
+    Route::delete('members/{id}', [MemberController::class, 'destroy']);
     Route::post('members/{id}/loans', [LoanController::class, 'store']);
     Route::put('loans/{id}', [LoanController::class, 'update']);
     Route::delete('loans/{id}', [LoanController::class, 'destroy']);

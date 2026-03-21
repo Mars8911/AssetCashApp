@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AuthController as ApiAuthController;
 use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\LocationController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\RegisterController;
 use App\Http\Controllers\Api\StoreController;
@@ -38,4 +39,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/change-password', [ApiAuthController::class, 'changePassword']);
     Route::get('/notifications', [NotificationController::class, 'index']);
     Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
+    Route::post('/locations', [LocationController::class, 'store']);
 });

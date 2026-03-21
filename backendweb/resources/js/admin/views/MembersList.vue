@@ -39,7 +39,14 @@
                     <router-link :to="`/members/${m.id}/location`" class="btn btn-sm btn-outline-secondary">位置</router-link>
                   </td>
                   <td>
-                    <router-link :to="`/members/${m.id}`" class="btn btn-sm btn-outline-primary">詳情</router-link>
+                    <router-link :to="`/members/${m.id}`" class="btn btn-sm btn-outline-primary me-1">詳情</router-link>
+                    <button
+                      v-if="!isReadOnly"
+                      class="btn btn-sm btn-outline-danger"
+                      @click="confirmDelete(m)"
+                    >
+                      刪除
+                    </button>
                   </td>
                 </tr>
                 <tr v-if="!members.length">
@@ -66,6 +73,11 @@ export default {
       members: [],
     };
   },
+  computed: {
+    isReadOnly() {
+      return this.user?.role === 'shareholder';
+    },
+  },
   mounted() {
     this.fetchUser();
     this.fetchMembers();
@@ -86,6 +98,23 @@ export default {
         this.members = data.members || [];
       }
     },
+    async confirmDelete(member) {
+      if (!confirm(`確定要刪除會員「${member.name}」嗎？此操作無法復原。`)) return;
+      const res = await fetch(`/api/admin/members/${member.id}`, {
+        method: 'DELETE',
+        headers: { 'X-CSRF-TOKEN': this.csrfToken, Accept: 'application/json' },
+        credentials: 'same-origin',
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        alert(data.message || '刪除失敗');
+        return;
+      }
+      this.members = this.members.filter((m) => m.id !== member.id);
+    },
+  },
+  created() {
+    this.csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
   },
 };
 </script>

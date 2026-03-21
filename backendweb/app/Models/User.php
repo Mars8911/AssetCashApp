@@ -68,6 +68,12 @@ class User extends Authenticatable
         return $this->hasMany(Loan::class);
     }
 
+    /** 關聯：會員的定位點紀錄 */
+    public function locationPoints()
+    {
+        return $this->hasMany(LocationPoint::class);
+    }
+
     /** 是否為最高權限管理者 */
     public function isSuperAdmin(): bool
     {

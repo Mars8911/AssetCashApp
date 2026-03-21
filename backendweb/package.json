@@ -17,6 +17,7 @@
     "dependencies": {
         "@vitejs/plugin-vue": "^6.0.4",
         "bootstrap": "^5.3.8",
+        "leaflet": "^1.9.4",
         "vue": "^3.5.29",
         "vue-router": "^4.6.4"
     }

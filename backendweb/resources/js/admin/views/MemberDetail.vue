@@ -19,6 +19,11 @@
               <h5 class="mb-0">會員等級與積分</h5>
             </div>
             <div class="card-body">
+              <div v-if="(member.interest_discount_percent || 0) > 0" class="alert alert-success py-2 mb-3">
+                <span class="fw-semibold">註冊優惠券：</span>
+                此會員享有利息 <strong>{{ member.interest_discount_percent }}%</strong> 折抵
+                <span v-if="member.coupon">（優惠碼：{{ member.coupon.code }}）</span>
+              </div>
               <div class="row g-3">
                 <div class="col-md-4">
                   <label class="form-label">會員等級</label>
@@ -158,6 +163,9 @@
                       <input v-model.number="loan.interest_rate" type="number" class="form-control" min="0" step="0.1" :disabled="isReadOnly" />
                       <span class="input-group-text">%</span>
                     </div>
+                    <small v-if="(member.interest_discount_percent || 0) > 0" class="text-success">
+                      會員享 {{ member.interest_discount_percent }}% 折抵
+                    </small>
                   </div>
                   <div class="col-md-2">
                     <label class="form-label small text-muted">月還款金額 <span class="text-muted">(系統計算)</span></label>

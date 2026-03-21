@@ -36,7 +36,7 @@ class MemberController extends Controller
     public function show(Request $request, int $id): JsonResponse
     {
         $admin = $request->user();
-        $member = User::with(['store', 'loans' => fn ($q) => $q->with(['store', 'repayments'])])
+        $member = User::with(['store', 'coupon', 'loans' => fn ($q) => $q->with(['store', 'repayments'])])
             ->where('role', 'member')
             ->findOrFail($id);
 

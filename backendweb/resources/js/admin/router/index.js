@@ -52,6 +52,12 @@ export default [
     meta: { requiresAuth: true, requiresSuperAdmin: true },
   },
   {
+    path: '/coupons',
+    name: 'Coupons',
+    component: () => import('../views/CouponsList.vue'),
+    meta: { requiresAuth: true, requiresNotShareholder: true },
+  },
+  {
     path: '/:pathMatch(.*)*',
     redirect: '/dashboard',
   },

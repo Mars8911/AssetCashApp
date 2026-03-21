@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\LocationController as AdminLocationController;
 use App\Http\Controllers\Admin\PushNotificationController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\StoreController;
+use App\Http\Controllers\Admin\CouponController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -34,6 +35,12 @@ Route::prefix('api/admin')->middleware(['web', 'auth', 'admin'])->group(function
     Route::post('loans/{id}/repayments', [LoanRepaymentController::class, 'store']);
     Route::delete('repayments/{id}', [LoanRepaymentController::class, 'destroy']);
     Route::post('push-notifications/send', [PushNotificationController::class, 'send']);
+
+    // 優惠券管理（super_admin 全店，store_manager 所屬店）
+    Route::get('coupons', [CouponController::class, 'index']);
+    Route::post('coupons', [CouponController::class, 'store']);
+    Route::put('coupons/{id}', [CouponController::class, 'update']);
+    Route::delete('coupons/{id}', [CouponController::class, 'destroy']);
 
     // 管理者管理、店家管理（僅 super_admin 可存取）
     Route::middleware('super_admin')->group(function () {

@@ -12,6 +12,9 @@
         <li v-if="user?.role !== 'shareholder'" class="nav-item">
           <router-link to="/push-notifications" class="nav-link" active-class="active">訊息推播管理</router-link>
         </li>
+        <li v-if="user?.role !== 'shareholder'" class="nav-item">
+          <router-link to="/coupons" class="nav-link" active-class="active">優惠券管理</router-link>
+        </li>
         <li v-if="user?.role === 'super_admin'" class="nav-item">
           <router-link to="/admins" class="nav-link" active-class="active">管理者管理</router-link>
         </li>

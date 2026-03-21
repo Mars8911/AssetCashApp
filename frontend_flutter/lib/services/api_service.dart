@@ -98,6 +98,7 @@ class ApiService {
           'password': password,
           'password_confirmation': passwordConfirmation,
           'store_id': storeId,
+          if (promoCode != null && promoCode.isNotEmpty) 'promo_code': promoCode,
         },
       );
       if (response.statusCode == 201) {

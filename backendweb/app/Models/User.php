@@ -26,6 +26,8 @@ class User extends Authenticatable
         'store_id',
         'member_level',   // 一般/優質/VIP
         'points',
+        'interest_discount_percent',
+        'coupon_id',
         'id_number',
         'phone',
         'address',
@@ -60,6 +62,12 @@ class User extends Authenticatable
     public function store()
     {
         return $this->belongsTo(Store::class);
+    }
+
+    /** 關聯：註冊時使用的優惠券 */
+    public function coupon()
+    {
+        return $this->belongsTo(Coupon::class);
     }
 
     /** 關聯：會員的貸款案件 */

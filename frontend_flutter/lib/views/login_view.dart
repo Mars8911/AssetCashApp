@@ -188,7 +188,7 @@ class _LoginViewState extends State<LoginView> {
         ),
         const SizedBox(height: 16),
         const Text(
-          'TrackMe',
+          'AsseTcash APP',
           style: TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.bold,

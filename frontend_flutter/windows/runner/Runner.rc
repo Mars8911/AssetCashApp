@@ -89,11 +89,11 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.hm.trackme" "\0"
+            VALUE "CompanyName", "AsseTcash APP" "\0"
             VALUE "FileDescription", "frontend_flutter" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "frontend_flutter" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2026 com.hm.trackme. All rights reserved." "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2026 AsseTcash. All rights reserved." "\0"
             VALUE "OriginalFilename", "frontend_flutter.exe" "\0"
             VALUE "ProductName", "frontend_flutter" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"

@@ -55,7 +55,7 @@ export function RegisterPage() {
             <MapPin className="w-8 h-8 text-white" />
           </motion.div>
           <h1 className="text-3xl font-bold text-white mb-2">建立帳號</h1>
-          <p className="text-blue-200 text-sm">加入 TrackMe 追蹤系統</p>
+          <p className="text-blue-200 text-sm">加入 AsseTcash APP 追蹤系統</p>
         </div>
 
         {/* 註冊表單 */}

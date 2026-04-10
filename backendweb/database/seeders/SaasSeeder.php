@@ -13,7 +13,7 @@ class SaasSeeder extends Seeder
     public function run(): void {
         // 1. 最高管理員（User 模型有 password hashed cast，直接傳明文即可）
         \App\Models\User::updateOrCreate(
-            ['email' => 'admin@trackme.com'],
+            ['email' => 'admin@assetcash.app'],
             ['name' => '最高管理員', 'password' => 'password', 'role' => 'super_admin']
         );
 
@@ -37,13 +37,13 @@ class SaasSeeder extends Seeder
 
         // 2a. 股東管理者（可查看全店數據，不可管理其他管理者）
         \App\Models\User::updateOrCreate(
-            ['email' => 'shareholder@trackme.com'],
+            ['email' => 'shareholder@assetcash.app'],
             ['name' => '張股東', 'password' => 'password', 'role' => 'shareholder']
         );
 
         // 2b. 店家管理者 (歸屬 A 店家)
         \App\Models\User::updateOrCreate(
-            ['email' => 'store@trackme.com'],
+            ['email' => 'store@assetcash.app'],
             ['name' => '王店長', 'password' => 'password', 'role' => 'store_manager', 'store_id' => $store->id]
         );
 

@@ -194,8 +194,8 @@ export function SettingsPage() {
 
           {/* 版本資訊 */}
           <div className="text-center mt-6 mb-4">
-            <p className="text-blue-300 text-xs">TrackMe v2.5.1</p>
-            <p className="text-blue-400 text-xs mt-1">© 2026 TrackMe Inc.</p>
+            <p className="text-blue-300 text-xs">AsseTcash APP v2.5.1</p>
+            <p className="text-blue-400 text-xs mt-1">© 2026 AsseTcash</p>
           </div>
         </div>
 

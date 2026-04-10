@@ -139,7 +139,10 @@
                       class="form-control form-control-sm"
                       inputmode="numeric"
                       :disabled="isReadOnly"
-                      @input="loan.loan_amount = parseNumberInput($event.target.value)"
+                      @input="
+                        loan.loan_amount = parseNumberInput($event.target.value);
+                        debouncedPreviewLoanPayment(loan);
+                      "
                     />
                   </div>
                   <div class="col-md-2">
@@ -150,7 +153,10 @@
                       class="form-control form-control-sm"
                       inputmode="numeric"
                       :disabled="isReadOnly"
-                      @input="loan.remaining_amount = parseNumberInput($event.target.value)"
+                      @input="
+                        loan.remaining_amount = parseNumberInput($event.target.value);
+                        debouncedPreviewLoanPayment(loan);
+                      "
                     />
                   </div>
                 </div>
@@ -158,9 +164,17 @@
                 <!-- 還款相關欄位（依還款方式顯示不同格式） -->
                 <div class="row g-3 mb-2">
                   <div class="col-md-2">
-                    <label class="form-label small text-muted">利率 KEY 入</label>
+                    <label class="form-label small text-muted">利率（%）</label>
                     <div class="input-group input-group-sm">
-                      <input v-model.number="loan.interest_rate" type="number" class="form-control" min="0" step="0.1" :disabled="isReadOnly" />
+                      <input
+                        v-model.number="loan.interest_rate"
+                        type="number"
+                        class="form-control"
+                        min="0"
+                        step="0.1"
+                        :disabled="isReadOnly"
+                        @input="debouncedPreviewLoanPayment(loan)"
+                      />
                       <span class="input-group-text">%</span>
                     </div>
                     <small v-if="(member.interest_discount_percent || 0) > 0" class="text-success">
@@ -176,6 +190,9 @@
                       readonly
                       placeholder="NT:0"
                     />
+                    <small class="text-muted d-block mt-1">
+                      純繳息：尚餘（無或 0 則用借貸金額）×折抵後利率%／本利攤：等額本息（尚餘或借貸金額、利率、期數）
+                    </small>
                   </div>
                   <div class="col-md-3">
                     <label class="form-label small text-muted">利息收取</label>
@@ -216,8 +233,8 @@
                       :disabled="isReadOnly"
                     />
                   </div>
-                  <!-- 本利攤專屬：期數 -->
-                  <div class="col-md-2" v-if="loan.repayment_type === 'amortization'">
+                  <!-- 期數：本利攤用於計算；純繳息可填總期數（紀錄） -->
+                  <div class="col-md-2">
                     <label class="form-label small text-muted">期數</label>
                     <input
                       v-model.number="loan.loan_periods"
@@ -226,7 +243,9 @@
                       min="0"
                       placeholder="個月"
                       :disabled="isReadOnly"
+                      @input="debouncedPreviewLoanPayment(loan)"
                     />
+                    <small v-if="loan.repayment_type === 'interest_only'" class="text-muted">總期數（紀錄）</small>
                   </div>
                   <!-- 本利攤專屬：綁約 -->
                   <div class="col-md-2" v-if="loan.repayment_type === 'amortization'">
@@ -424,6 +443,7 @@ export default {
       showAddRepaymentModal: false,
       addRepaymentLoan: null,
       addRepaymentForm: { amount: 0, payment_date: '', status: '', notes: '' },
+      loanPreviewTimers: {},
     };
   },
   computed: {
@@ -649,6 +669,45 @@ export default {
       if (loan.interest_collection === '後收') return '後收';
       return loan.interest_collection || null;
     },
+    debouncedPreviewLoanPayment(loan) {
+      if (this.isReadOnly || !loan?.id) return;
+      clearTimeout(this.loanPreviewTimers[loan.id]);
+      this.loanPreviewTimers[loan.id] = setTimeout(() => this.previewLoanMonthlyPayment(loan), 350);
+    },
+    async previewLoanMonthlyPayment(loan) {
+      if (this.isReadOnly || !this.member) return;
+      const remaining = Number(loan.remaining_amount) || 0;
+      const loanAmt = Number(loan.loan_amount) || 0;
+      const rate = Number(loan.interest_rate) || 0;
+      const periods =
+        loan.repayment_type === 'amortization' ? parseInt(String(loan.loan_periods || 0), 10) || 0 : 0;
+      try {
+        const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        const res = await fetch(`/api/admin/members/${this.$route.params.id}/loans/preview-monthly-payment`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+            'X-CSRF-TOKEN': csrf || '',
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+          credentials: 'same-origin',
+          body: JSON.stringify({
+            remaining_amount: remaining,
+            loan_amount: loanAmt,
+            interest_rate: rate,
+            loan_periods: loan.repayment_type === 'amortization' ? periods : null,
+            repayment_type: loan.repayment_type,
+          }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          loan.monthly_payment = data.monthly_payment;
+        }
+      } catch (e) {
+        /* 略過預覽錯誤，保留上次金額 */
+      }
+    },
     async fetchUser() {
       const res = await fetch('/api/admin/user', { credentials: 'same-origin' });
       if (res.ok) this.user = await res.json();
@@ -691,6 +750,9 @@ export default {
               repayments: [...(l.repayments || [])],
             };
           });
+          this.$nextTick(() => {
+            this.loanForms.forEach((loan) => this.previewLoanMonthlyPayment(loan));
+          });
         }
       } finally {
         this.loading = false;
@@ -732,10 +794,9 @@ export default {
               loan_amount: loan.loan_amount,
               remaining_amount: loan.remaining_amount,
               interest_rate: loan.interest_rate,
-              monthly_payment: loan.monthly_payment,
               repayment_day: this.buildRepaymentDay(loan),
               interest_collection: this.buildInterestCollection(loan),
-              loan_periods: loan.repayment_type === 'amortization' ? loan.loan_periods : null,
+              loan_periods: loan.loan_periods,
               contract_months: loan.repayment_type === 'amortization' ? loan.contract_months : null,
             }),
           });

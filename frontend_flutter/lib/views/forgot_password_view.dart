@@ -110,7 +110,7 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
           ),
           const SizedBox(height: 12),
           const Text(
-            'TrackMe',
+            'AsseTcash APP',
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,

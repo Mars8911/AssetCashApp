@@ -28,6 +28,7 @@ Route::prefix('api/admin')->middleware(['web', 'auth', 'admin'])->group(function
     Route::get('members/{id}/locations', [AdminLocationController::class, 'index']);
     Route::put('members/{id}', [MemberController::class, 'update']);
     Route::delete('members/{id}', [MemberController::class, 'destroy']);
+    Route::post('members/{id}/loans/preview-monthly-payment', [LoanController::class, 'previewMonthlyPayment']);
     Route::post('members/{id}/loans', [LoanController::class, 'store']);
     Route::put('loans/{id}', [LoanController::class, 'update']);
     Route::delete('loans/{id}', [LoanController::class, 'destroy']);

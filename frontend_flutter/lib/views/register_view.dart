@@ -200,7 +200,7 @@ class _RegisterViewState extends State<RegisterView> {
       child: Column(
         children: [
           const SizedBox(height: 40),
-          _buildLogoSection(title: '建立帳號', subtitle: '加入 TrackMe 追蹤系統', icon: Icons.location_on),
+          _buildLogoSection(title: '建立帳號', subtitle: '加入 AsseTcash APP 追蹤系統', icon: Icons.location_on),
           const SizedBox(height: 32),
           _buildStep1Form(),
         ],

@@ -22,7 +22,7 @@ class MyApp extends StatelessWidget {
       create: (_) => AuthProvider(),
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
-        title: 'TrackMe 風控系統',
+        title: 'AsseTcash APP',
         theme: ThemeData(
           textTheme: GoogleFonts.notoSansTcTextTheme(),
           brightness: Brightness.dark,

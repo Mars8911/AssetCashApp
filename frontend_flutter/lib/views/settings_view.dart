@@ -531,7 +531,7 @@ class _SettingsViewState extends State<SettingsView> {
       child: Column(
         children: [
           Text(
-            'TrackMe v2.5.1',
+            'AsseTcash APP v2.5.1',
             style: GoogleFonts.notoSansTc(
               color: DashboardDesign.textBlue300,
               fontSize: DashboardDesign.fontSizeXs,
@@ -539,7 +539,7 @@ class _SettingsViewState extends State<SettingsView> {
           ),
           const SizedBox(height: 4),
           Text(
-            '© 2026 TrackMe Inc.',
+            '© 2026 AsseTcash',
             style: GoogleFonts.notoSansTc(
               color: DashboardDesign.blue400,
               fontSize: DashboardDesign.fontSizeXs,

@@ -7,7 +7,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Frontend Flutter</string>
+	<string>AsseTcash APP</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -27,11 +27,11 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>TrackMe 需要在背景持續記錄您的位置，供管理員追蹤</string>
+	<string>AsseTcash APP 需要在背景持續記錄您的位置，供管理員追蹤</string>
 	<key>NSLocationAlwaysUsageDescription</key>
-	<string>TrackMe 需要在背景持續記錄您的位置，供管理員追蹤</string>
+	<string>AsseTcash APP 需要在背景持續記錄您的位置，供管理員追蹤</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>TrackMe 需要存取您的位置以提供即時定位追蹤服務</string>
+	<string>AsseTcash APP 需要存取您的位置以提供即時定位追蹤服務</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsLocalNetworking</key>

@@ -9,7 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'api_service.dart';
 
-const String _channelId = 'trackme_location';
+const String _channelId = 'assetcash_location';
 const int _notificationId = 9001;
 const String _prefKeyToken = 'auth_token';
 const String _prefKeyTrackingEnabled = 'location_tracking_enabled';
@@ -31,7 +31,7 @@ Future<void> initializeLocationService() async {
       autoStart: false,
       isForegroundMode: true,
       notificationChannelId: _channelId,
-      initialNotificationTitle: 'TrackMe 定位追蹤',
+      initialNotificationTitle: 'AsseTcash APP 定位追蹤',
       initialNotificationContent: '正在背景記錄您的位置',
       foregroundServiceNotificationId: _notificationId,
     ),

@@ -589,7 +589,7 @@ class ProfileView extends StatelessWidget {
       child: Column(
         children: [
           Text(
-            'TrackMe v2.5.1',
+            'AsseTcash APP v2.5.1',
             style: TextStyle(
               color: DashboardDesign.textBlue300,
               fontSize: DashboardDesign.fontSizeXs,
@@ -597,7 +597,7 @@ class ProfileView extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            '© 2026 TrackMe Inc.',
+            '© 2026 AsseTcash',
             style: TextStyle(
               color: DashboardDesign.blue400,
               fontSize: DashboardDesign.fontSizeXs,

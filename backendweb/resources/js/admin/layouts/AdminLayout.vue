@@ -1,7 +1,7 @@
 <template>
   <div class="d-flex admin-layout">
     <nav class="sidebar d-none d-md-flex flex-column flex-shrink-0 p-3">
-      <router-link to="/dashboard" class="navbar-brand text-white mb-4 text-decoration-none">📍 TrackMe</router-link>
+      <router-link to="/dashboard" class="navbar-brand text-white mb-4 text-decoration-none">📍 AsseTcash APP</router-link>
       <ul class="nav flex-column">
         <li class="nav-item">
           <router-link to="/dashboard" class="nav-link" active-class="active">儀表板</router-link>

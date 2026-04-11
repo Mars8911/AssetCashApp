@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Route;
 // API 根路徑（供測試用）
 Route::get('/', function () {
     return response()->json([
-        'app' => 'AsseTcash API',
+        'app' => 'AssetCash APP',
         'version' => '1.0',
         'endpoints' => [
             'GET /api' => '此說明',

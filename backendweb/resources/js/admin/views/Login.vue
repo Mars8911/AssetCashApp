@@ -2,8 +2,8 @@
   <div class="login-wrapper">
     <div class="login-card">
       <div class="login-brand">
-        <h1>📍 AsseTcash APP 管理後台</h1>
-        <p>追蹤定位系統 · 僅限管理者登入</p>
+        <h1>📍 AssetCash APP 管理後台</h1>
+        <p>資產與定位風控 · 僅限管理者登入</p>
       </div>
       <div class="login-body">
         <div v-if="errors.length" class="alert alert-danger py-2 mb-3" role="alert">

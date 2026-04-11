@@ -4,18 +4,18 @@ services:
     build:
       context: ./backendweb
       dockerfile: ../docker-config/php.dockerfile # 我們稍後建立這個
-    container_name: tracking-app-server
+    container_name: assetcash-app-server
     restart: unless-stopped
     working_dir: /var/www
     volumes:
       - ./backendweb:/var/www
     networks:
-      - tracking-network
+      - assetcash-network
 
   # 2. Nginx 網頁伺服器 (負責轉發請求)
   web:
     image: nginx:alpine
-    container_name: tracking-nginx
+    container_name: assetcash-nginx
     ports:
       - "8000:80" # 你可以透過 http://localhost:8000 存取 API
     volumes:
@@ -24,13 +24,12 @@ services:
     depends_on:
       - app
     networks:
-      - tracking-network
+      - assetcash-network
 
-  # 3. MySQL 8 資料庫services:
-  # 你原有的 db 服務
+  # 3. MySQL 8 資料庫（服務名 db：同網路內其他容器請用 DB_HOST=db）
   db:
     image: mysql:8.0
-    container_name: tracking-mysql
+    container_name: assetcash-mysql
     restart: unless-stopped
     environment:
       MYSQL_DATABASE: tracking_db
@@ -40,32 +39,32 @@ services:
     volumes:
       - dbdata:/var/lib/mysql
     networks:
-      - tracking-network
+      - assetcash-network
 
   # 新增 phpMyAdmin 服務
   phpmyadmin:
     image: phpmyadmin:latest
-    container_name: tracking-phpmyadmin
+    container_name: assetcash-phpmyadmin
     restart: always
     ports:
       - "8081:80" # 這樣你就能透過 http://localhost:8081 進入
     environment:
-      # 重要：這裡的 PMA_HOST 必須對應上面 db 服務的 container_name 或服務名稱
-      - PMA_HOST=tracking-mysql 
+      # 使用 Compose 服務名 db，與 container_name 無關，較不易因改名斷線
+      - PMA_HOST=db
       - PMA_PORT=3306
       - MYSQL_ROOT_PASSWORD=root
     networks:
-      - tracking-network
+      - assetcash-network
 
   # 4. Redis (定位數據的高速緩衝)
   redis:
     image: redis:alpine
-    container_name: tracking-redis
+    container_name: assetcash-redis
     networks:
-      - tracking-network
+      - assetcash-network
 
 networks:
-  tracking-network:
+  assetcash-network:
     driver: bridge
 
 volumes:

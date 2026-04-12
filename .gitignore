@@ -12,16 +12,16 @@ Thumbs.db
 # ==========================================
 # Laravel 後端相關 (backend-laravel)
 # ==========================================
-/backendweb//vendor/
-/backendweb//node_modules/
-/backendweb//public/storage
-/backendweb//public/hot
-/backendweb//storage/*.key
-/backendweb//.env
-/backendweb//.env.backup
-/backendweb//bootstrap/cache/*
-/backendweb//npm-debug.log
-/backendweb//auth_p12.keystore
+/backendweb/vendor/
+/backendweb/node_modules/
+/backendweb/public/storage
+/backendweb/public/hot
+/backendweb/storage/*.key
+/backendweb/.env
+/backendweb/.env.backup
+/backendweb/bootstrap/cache/*
+/backendweb/npm-debug.log
+/backendweb/auth_p12.keystore
 
 # ==========================================
 # Flutter 前端相關 (frontend-flutter)

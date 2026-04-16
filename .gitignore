@@ -8,6 +8,7 @@ Thumbs.db
 *.swp
 *.log
 .env
+CLAUDE.md
 
 # ==========================================
 # Laravel 後端相關 (backend-laravel)

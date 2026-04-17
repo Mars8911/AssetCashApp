@@ -32,6 +32,7 @@ Route::prefix('api/admin')->middleware(['web', 'auth', 'admin'])->group(function
     Route::post('members/{id}/loans', [LoanController::class, 'store']);
     Route::put('loans/{id}', [LoanController::class, 'update']);
     Route::delete('loans/{id}', [LoanController::class, 'destroy']);
+    Route::get('loans/{id}/schedule', [LoanController::class, 'repaymentSchedule']);
     Route::get('loans/{id}/repayments', [LoanRepaymentController::class, 'index']);
     Route::post('loans/{id}/repayments', [LoanRepaymentController::class, 'store']);
     Route::delete('repayments/{id}', [LoanRepaymentController::class, 'destroy']);

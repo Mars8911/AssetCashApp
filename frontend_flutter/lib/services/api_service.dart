@@ -49,10 +49,7 @@ class RegisterResult {
 }
 
 class ApiService {
-  // iOS 模擬器 / 本機：127.0.0.1
-  // Android 模擬器：10.0.2.2
-  // 實機：電腦的局域網 IP (如 192.168.1.x)
-  static const String baseUrl = "http://127.0.0.1:8000/api";
+  static const String baseUrl = "https://assetcash.com.tw/api";
   final Dio _dio = Dio();
 
   /// 取得店家列表（供註冊時選擇）

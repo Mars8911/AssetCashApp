@@ -79,244 +79,253 @@
             </div>
           </div>
 
-          <!-- 貸款案件（可編輯） -->
+          <!-- 貸款案件（借貸資訊表） -->
           <div class="card border-0 shadow-sm mb-4">
             <div class="card-header bg-white d-flex justify-content-between align-items-center">
-              <h5 class="mb-0">貸款案件</h5>
+              <h5 class="mb-0">借貸資訊表</h5>
               <button v-if="!isReadOnly" type="button" class="btn btn-primary btn-sm" @click="openAddLoanModal">新增案件</button>
             </div>
-            <div class="card-body">
-              <div v-for="(loan, idx) in loanForms" :key="loan.id" class="loan-case-row border rounded p-3 mb-3">
-                <div class="d-flex justify-content-between align-items-start mb-3">
-                  <span class="text-muted small">案件 #{{ loan.id }}</span>
-                  <button
-                    v-if="!isReadOnly"
-                    type="button"
-                    class="btn btn-danger btn-sm"
-                    @click="handleDeleteLoan(idx)"
-                  >
-                    刪除此案件
-                  </button>
-                </div>
-
-                <!-- 還款方式（選定後不可更改） -->
-                <div class="row g-3 mb-3">
-                  <div class="col-12">
-                    <label class="form-label fw-semibold me-2">還款方式</label>
-                    <span class="badge bg-secondary fs-6">{{ repaymentLabel(loan.repayment_type) }}</span>
-                    <span class="text-muted small ms-2">（選定後不可更改）</span>
-                  </div>
-                </div>
-
-                <!-- 擔保品與金額（共用） -->
-                <div class="row g-3 mb-3">
-                  <div class="col-md-3">
-                    <label class="form-label small text-muted">擔保品下拉選單</label>
-                    <select v-model="loan.collateral_type" class="form-select form-select-sm" :disabled="isReadOnly">
-                      <option value="">請選擇</option>
-                      <option value="汽車">汽車</option>
-                      <option value="機車">機車</option>
-                      <option value="房屋">房屋</option>
-                      <option value="土地">土地</option>
-                      <option value="其他">其他</option>
-                    </select>
-                  </div>
-                  <div class="col-md-4">
-                    <label class="form-label small text-muted">擔保品資訊</label>
-                    <input
-                      v-model="loan.collateral_info"
-                      type="text"
-                      class="form-control form-control-sm"
-                      :placeholder="collateralPlaceholder(loan.collateral_type)"
-                      :disabled="isReadOnly"
-                    />
-                  </div>
-                  <div class="col-md-2">
-                    <label class="form-label small text-muted">借貸金額</label>
-                    <input
-                      :value="formatNumberInput(loan.loan_amount)"
-                      type="text"
-                      class="form-control form-control-sm"
-                      inputmode="numeric"
-                      :disabled="isReadOnly"
-                      @input="
-                        loan.loan_amount = parseNumberInput($event.target.value);
-                        debouncedPreviewLoanPayment(loan);
-                      "
-                    />
-                  </div>
-                  <div class="col-md-2">
-                    <label class="form-label small text-muted">尚餘</label>
-                    <input
-                      :value="formatNumberInput(loan.remaining_amount)"
-                      type="text"
-                      class="form-control form-control-sm"
-                      inputmode="numeric"
-                      :disabled="isReadOnly"
-                      @input="
-                        loan.remaining_amount = parseNumberInput($event.target.value);
-                        debouncedPreviewLoanPayment(loan);
-                      "
-                    />
-                  </div>
-                </div>
-
-                <!-- 還款相關欄位（依還款方式顯示不同格式） -->
-                <div class="row g-3 mb-2">
-                  <div class="col-md-2">
-                    <label class="form-label small text-muted">利率（%）</label>
-                    <div class="input-group input-group-sm">
-                      <input
-                        v-model.number="loan.interest_rate"
-                        type="number"
-                        class="form-control"
-                        min="0"
-                        step="0.1"
-                        :disabled="isReadOnly"
-                        @input="debouncedPreviewLoanPayment(loan)"
-                      />
-                      <span class="input-group-text">%</span>
-                    </div>
-                    <small v-if="(member.interest_discount_percent || 0) > 0" class="text-success">
-                      會員享 {{ member.interest_discount_percent }}% 折抵
-                    </small>
-                  </div>
-                  <div class="col-md-2">
-                    <label class="form-label small text-muted">月還款金額 <span class="text-muted">(系統計算)</span></label>
-                    <input
-                      :value="'NT:' + formatNumberInput(loan.monthly_payment)"
-                      type="text"
-                      class="form-control form-control-sm bg-light"
-                      readonly
-                      placeholder="NT:0"
-                    />
-                    <small class="text-muted d-block mt-1">
-                      純繳息：尚餘（無或 0 則用借貸金額）×折抵後利率%／本利攤：等額本息（尚餘或借貸金額、利率、期數）
-                    </small>
-                  </div>
-                  <div class="col-md-3">
-                    <label class="form-label small text-muted">利息收取</label>
-                    <select v-model="loan.interest_collection" class="form-select form-select-sm" :disabled="isReadOnly">
-                      <option value="">請選擇</option>
-                      <option value="前扣">前扣</option>
-                      <option value="後收">後收</option>
-                    </select>
-                  </div>
-                  <div class="col-md-2" v-if="loan.interest_collection === '前扣'">
-                    <label class="form-label small text-muted">前扣月數</label>
-                    <input
-                      v-model.number="loan.interest_collection_months"
-                      type="number"
-                      class="form-control form-control-sm"
-                      min="0"
-                      placeholder="個月"
-                      :disabled="isReadOnly"
-                    />
-                  </div>
-                  <div class="col-md-2">
-                    <label class="form-label small text-muted">還款日</label>
-                    <select v-model="loan.repayment_day" class="form-select form-select-sm" :disabled="isReadOnly">
-                      <option value="">請選擇</option>
-                      <option value="30天一期">30天一期</option>
-                      <option value="每月">每月指定日</option>
-                    </select>
-                  </div>
-                  <div class="col-md-1" v-if="loan.repayment_day === '每月'">
-                    <label class="form-label small text-muted">日</label>
-                    <input
-                      v-model.number="loan.repayment_day_of_month"
-                      type="number"
-                      class="form-control form-control-sm"
-                      min="1"
-                      max="31"
-                      placeholder="日"
-                      :disabled="isReadOnly"
-                    />
-                  </div>
-                  <!-- 期數：本利攤用於計算；純繳息可填總期數（紀錄） -->
-                  <div class="col-md-2">
-                    <label class="form-label small text-muted">期數</label>
-                    <input
-                      v-model.number="loan.loan_periods"
-                      type="number"
-                      class="form-control form-control-sm"
-                      min="0"
-                      placeholder="個月"
-                      :disabled="isReadOnly"
-                      @input="debouncedPreviewLoanPayment(loan)"
-                    />
-                    <small v-if="loan.repayment_type === 'interest_only'" class="text-muted">總期數（紀錄）</small>
-                  </div>
-                  <!-- 本利攤專屬：綁約 -->
-                  <div class="col-md-2" v-if="loan.repayment_type === 'amortization'">
-                    <label class="form-label small text-muted">綁約</label>
-                    <input
-                      v-model.number="loan.contract_months"
-                      type="number"
-                      class="form-control form-control-sm"
-                      min="0"
-                      placeholder="個月"
-                      :disabled="isReadOnly"
-                    />
-                  </div>
-                </div>
-
-                <!-- 繳款明細 -->
-                <div class="mt-3 pt-3 border-top">
-                  <div class="d-flex justify-content-between align-items-center mb-2">
-                    <label class="form-label small fw-semibold mb-0">繳款明細</label>
-                    <button v-if="!isReadOnly" type="button" class="btn btn-outline-primary btn-sm" @click="openAddRepaymentModal(loan)">
-                      新增還款
-                    </button>
-                  </div>
-                  <div class="table-responsive">
-                    <table class="table table-sm table-bordered mb-0">
-                      <thead class="table-light">
-                        <tr>
-                          <th>繳款日期</th>
-                          <th>金額</th>
-                          <th>狀態</th>
-                          <th>備註</th>
-                          <th width="80"></th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr v-for="r in getRepayments(loan.id)" :key="r.id">
-                          <td>{{ formatDate(r.payment_date) }}</td>
-                          <td>NT$ {{ formatNumber(r.amount) }}</td>
-                          <td>
-                            <span
-                              class="badge"
-                              :class="{
-                                'bg-success': r.status === '準時',
-                                'bg-info': r.status === '提前',
-                                'bg-warning': r.status === '延遲',
-                              }"
-                            >
-                              {{ r.status || '-' }}
-                            </span>
-                          </td>
-                          <td class="small">{{ r.notes || '-' }}</td>
-                          <td>
-                            <button
-                              v-if="!isReadOnly"
-                              type="button"
-                              class="btn btn-outline-danger btn-sm py-0"
-                              @click="handleDeleteRepayment(loan, r)"
-                            >
-                              刪除
-                            </button>
-                          </td>
-                        </tr>
-                        <tr v-if="!getRepayments(loan.id).length">
-                          <td colspan="5" class="text-center text-muted py-3">尚無還款紀錄</td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
+            <div class="card-body p-0">
               <div v-if="!loanForms.length" class="text-center text-muted py-4">尚無貸款案件</div>
+              <div v-else class="table-responsive">
+                <table class="table table-bordered mb-0 align-middle" style="min-width:900px">
+                  <!-- 表頭：對應 PDF 欄位 -->
+                  <thead class="table-dark text-center small">
+                    <tr>
+                      <th style="width:90px">筆</th>
+                      <th style="width:110px">抵押品<br/><span class="fw-normal opacity-75">（下拉選單）</span></th>
+                      <th style="width:155px">借貸金額</th>
+                      <th style="width:105px">還款方式</th>
+                      <th style="width:90px">利率</th>
+                      <th style="width:155px">利息</th>
+                      <th style="width:145px">每期繳款金額</th>
+                      <th style="width:135px">下期繳款日</th>
+                      <th style="width:50px"></th>
+                    </tr>
+                  </thead>
+
+                  <!-- 每筆貸款 = 3 列 -->
+                  <tbody v-for="(loan, idx) in loanForms" :key="loan.id" class="border-top border-2">
+
+                    <!-- ── 列1：主資料 ── -->
+                    <tr>
+                      <!-- 筆 / 日期 -->
+                      <td class="text-center p-2">
+                        <div class="fw-bold small text-muted">#{{ loan.id }}</div>
+                        <input
+                          v-model="loan.loan_date"
+                          type="date"
+                          class="form-control form-control-sm mt-1"
+                          :disabled="isReadOnly"
+                          style="font-size:0.75rem"
+                        />
+                      </td>
+
+                      <!-- 抵押品 dropdown -->
+                      <td class="p-2">
+                        <select v-model="loan.collateral_type" class="form-select form-select-sm" :disabled="isReadOnly">
+                          <option value="">請選擇</option>
+                          <option value="汽車">汽車</option>
+                          <option value="機車">機車</option>
+                          <option value="房屋">房屋</option>
+                          <option value="土地">土地</option>
+                          <option value="其他">其他</option>
+                        </select>
+                      </td>
+
+                      <!-- 借貸金額（本金 / 尚餘） -->
+                      <td class="p-2">
+                        <div class="d-flex align-items-center gap-1 mb-1">
+                          <span class="small text-muted" style="min-width:28px">本金</span>
+                          <input
+                            :value="formatNumberInput(loan.loan_amount)"
+                            type="text" inputmode="numeric"
+                            class="form-control form-control-sm"
+                            :disabled="isReadOnly"
+                            @input="loan.loan_amount = parseNumberInput($event.target.value); debouncedPreviewLoanPayment(loan);"
+                          />
+                        </div>
+                        <div class="d-flex align-items-center gap-1">
+                          <span class="small text-muted" style="min-width:28px">尚餘</span>
+                          <input
+                            :value="formatNumberInput(loan.remaining_amount)"
+                            type="text" inputmode="numeric"
+                            class="form-control form-control-sm"
+                            :disabled="isReadOnly"
+                            @input="loan.remaining_amount = parseNumberInput($event.target.value); debouncedPreviewLoanPayment(loan);"
+                          />
+                        </div>
+                      </td>
+
+                      <!-- 還款方式 badge + 本利攤的期數/綁約 -->
+                      <td class="text-center p-2">
+                        <span
+                          class="badge px-2 py-2"
+                          style="font-size:0.85rem"
+                          :class="loan.repayment_type === 'interest_only' ? 'bg-success' : 'bg-primary'"
+                        >
+                          {{ loan.repayment_type === 'interest_only' ? 'A 純繳息' : 'B 本利攤' }}
+                        </span>
+                        <template v-if="loan.repayment_type === 'amortization'">
+                          <div class="d-flex gap-1 mt-2 justify-content-center">
+                            <div class="text-start">
+                              <div class="small text-muted">期數</div>
+                              <input v-model.number="loan.loan_periods" type="number" class="form-control form-control-sm" min="0" placeholder="月" :disabled="isReadOnly" @input="debouncedPreviewLoanPayment(loan)" style="width:52px" />
+                            </div>
+                            <div class="text-start">
+                              <div class="small text-muted">綁約</div>
+                              <input v-model.number="loan.contract_months" type="number" class="form-control form-control-sm" min="0" placeholder="月" :disabled="isReadOnly" style="width:52px" />
+                            </div>
+                          </div>
+                        </template>
+                      </td>
+
+                      <!-- 利率 -->
+                      <td class="p-2">
+                        <div class="input-group input-group-sm">
+                          <input
+                            v-model.number="loan.interest_rate"
+                            type="number" min="0" step="0.1"
+                            class="form-control"
+                            :disabled="isReadOnly"
+                            @input="debouncedPreviewLoanPayment(loan)"
+                          />
+                          <span class="input-group-text">%</span>
+                        </div>
+                        <small v-if="(member.interest_discount_percent || 0) > 0" class="text-success d-block mt-1">
+                          折抵 {{ member.interest_discount_percent }}%
+                        </small>
+                      </td>
+
+                      <!-- 利息（前扣 / 後收 + 月數） -->
+                      <td class="p-2">
+                        <select v-model="loan.interest_collection" class="form-select form-select-sm mb-1" :disabled="isReadOnly">
+                          <option value="">請選擇</option>
+                          <option value="前扣">前扣</option>
+                          <option value="後收">後收</option>
+                        </select>
+                        <div v-if="loan.interest_collection === '前扣'" class="d-flex align-items-center gap-1">
+                          <input
+                            v-model.number="loan.prepaid_months"
+                            type="number" min="0" placeholder="月"
+                            class="form-control form-control-sm"
+                            :disabled="isReadOnly"
+                            @input="debouncedPreviewLoanPayment(loan)"
+                            style="width:60px"
+                          />
+                          <span class="small text-muted">個月</span>
+                        </div>
+                        <div v-if="loan.interest_collection === '前扣' && loan.prepaid_months > 0" class="mt-1 small">
+                          <div class="text-warning-emphasis">預扣：NT$ {{ formatNumberInput(loan.prepaid_amount) }}</div>
+                          <div class="text-success">實收：NT$ {{ formatNumberInput(loan.net_disbursement) }}</div>
+                        </div>
+                      </td>
+
+                      <!-- 每期繳款金額（系統計算） -->
+                      <td class="text-center p-2">
+                        <div class="fw-bold text-primary" style="font-size:1.1rem">
+                          NT$ {{ formatNumberInput(loan.monthly_payment) }}
+                        </div>
+                        <div class="small text-muted mt-1">
+                          每
+                          <template v-if="loan.repayment_day_type === '30天'">隔30日</template>
+                          <template v-else-if="loan.repayment_day_of_month">月{{ loan.repayment_day_of_month }}日</template>
+                          <template v-else>-</template>
+                          收
+                        </div>
+                      </td>
+
+                      <!-- 下期繳款日 / 還款週期設定 -->
+                      <td class="p-2">
+                        <select v-model="loan.repayment_day_type" class="form-select form-select-sm mb-1" :disabled="isReadOnly">
+                          <option value="">請選擇</option>
+                          <option value="30天">每隔30日</option>
+                          <option value="每月">每月指定日</option>
+                        </select>
+                        <input
+                          v-if="loan.repayment_day_type === '每月'"
+                          v-model.number="loan.repayment_day_of_month"
+                          type="number" min="1" max="31" placeholder="幾日"
+                          class="form-control form-control-sm"
+                          :disabled="isReadOnly"
+                        />
+                      </td>
+
+                      <!-- 刪除 -->
+                      <td class="text-center p-2">
+                        <button
+                          v-if="!isReadOnly"
+                          type="button"
+                          class="btn btn-outline-danger btn-sm py-0 px-1"
+                          @click="handleDeleteLoan(idx)"
+                        >✕</button>
+                      </td>
+                    </tr>
+
+                    <!-- ── 列2：擔保品資訊 + 客戶紀錄欄 ── -->
+                    <tr class="table-light">
+                      <td class="p-2 small text-muted text-center align-middle">擔保品資訊</td>
+                      <td colspan="7" class="p-2">
+                        <div class="d-flex align-items-center gap-3 flex-wrap">
+                          <input
+                            v-model="loan.collateral_info"
+                            type="text"
+                            class="form-control form-control-sm"
+                            :placeholder="collateralPlaceholder(loan.collateral_type)"
+                            :disabled="isReadOnly"
+                            style="max-width:280px"
+                          />
+                          <span class="small text-muted fst-italic">客戶紀錄欄</span>
+                        </div>
+                      </td>
+                      <td class="p-2"></td>
+                    </tr>
+
+                    <!-- ── 列3：繳款明細 ── -->
+                    <tr>
+                      <td class="p-2 small text-muted text-center align-top pt-3">繳款明細</td>
+                      <td colspan="7" class="p-2">
+                        <div class="d-flex justify-content-end mb-2">
+                          <button v-if="!isReadOnly" type="button" class="btn btn-outline-primary btn-sm" @click="openAddRepaymentModal(loan)">
+                            新增還款
+                          </button>
+                        </div>
+                        <table class="table table-sm table-bordered mb-0">
+                          <thead class="table-light">
+                            <tr>
+                              <th>繳款日期</th>
+                              <th>金額</th>
+                              <th>狀態</th>
+                              <th>備註</th>
+                              <th width="60"></th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr v-for="r in getRepayments(loan.id)" :key="r.id">
+                              <td>{{ formatDate(r.payment_date) }}</td>
+                              <td>NT$ {{ formatNumber(r.amount) }}</td>
+                              <td>
+                                <span class="badge" :class="{ 'bg-success': r.status === '準時', 'bg-info text-dark': r.status === '提前', 'bg-warning text-dark': r.status === '延遲' }">
+                                  {{ r.status || '-' }}
+                                </span>
+                              </td>
+                              <td class="small">{{ r.notes || '-' }}</td>
+                              <td>
+                                <button v-if="!isReadOnly" type="button" class="btn btn-outline-danger btn-sm py-0" @click="handleDeleteRepayment(loan, r)">刪除</button>
+                              </td>
+                            </tr>
+                            <tr v-if="!getRepayments(loan.id).length">
+                              <td colspan="5" class="text-center text-muted py-2">尚無還款紀錄</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </td>
+                      <td class="p-2"></td>
+                    </tr>
+
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
 
@@ -510,6 +519,7 @@ export default {
           const loan = data.loan;
           this.loanForms.push({
             id: loan.id,
+            loan_date: '',
             collateral_type: '',
             collateral_info: '',
             loan_amount: 0,
@@ -518,8 +528,10 @@ export default {
             repayment_type: this.addLoanRepaymentType,
             monthly_payment: 0,
             interest_collection: '',
-            interest_collection_months: null,
-            repayment_day: '',
+            prepaid_months: 0,
+            prepaid_amount: 0,
+            net_disbursement: 0,
+            repayment_day_type: '',
             repayment_day_of_month: null,
             loan_periods: null,
             contract_months: null,
@@ -640,33 +652,36 @@ export default {
         alert('刪除失敗');
       }
     },
+    /**
+     * 解析後端 repayment_day 欄位 → { type, day }
+     * 支援舊格式 "30天一期"/"每月5日" 與新格式 "30天"/"5"
+     */
     parseRepaymentDay(val) {
       if (!val) return { type: '', day: null };
-      if (val === '30天一期') return { type: '30天一期', day: null };
+      // 舊格式：30天一期
+      if (val === '30天一期' || val === '30天') return { type: '30天', day: null };
+      // 舊格式：每月5日
       if (String(val).startsWith('每月')) {
-        const m = String(val).match(/每月(\d+)日?/);
+        const m = String(val).match(/每月(\d+)/);
         return { type: '每月', day: m ? parseInt(m[1], 10) : null };
       }
+      // 新格式：純數字 (1~31)
+      const num = parseInt(val, 10);
+      if (!isNaN(num) && num >= 1 && num <= 31) return { type: '每月', day: num };
       return { type: val, day: null };
     },
+    /**
+     * 組合 repayment_day 送後端：
+     *   "30天" 或 "1"~"31"
+     */
     buildRepaymentDay(loan) {
-      if (loan.repayment_day === '30天一期') return '30天一期';
-      if (loan.repayment_day === '每月' && loan.repayment_day_of_month != null && loan.repayment_day_of_month > 0) {
-        return `每月${loan.repayment_day_of_month}日`;
+      if (loan.repayment_day_type === '30天') return '30天';
+      if (loan.repayment_day_type === '每月' && loan.repayment_day_of_month > 0) {
+        return String(loan.repayment_day_of_month);
       }
-      return loan.repayment_day || null;
-    },
-    parseInterestCollection(val) {
-      if (!val) return { type: '', months: null };
-      if (val === '後收') return { type: '後收', months: null };
-      const m = String(val).match(/前扣(\d+)/);
-      return m ? { type: '前扣', months: parseInt(m[1], 10) } : { type: val, months: null };
+      return null;
     },
     buildInterestCollection(loan) {
-      if (loan.interest_collection === '前扣' && loan.interest_collection_months != null) {
-        return `前扣${loan.interest_collection_months}個月`;
-      }
-      if (loan.interest_collection === '後收') return '後收';
       return loan.interest_collection || null;
     },
     debouncedPreviewLoanPayment(loan) {
@@ -698,11 +713,14 @@ export default {
             interest_rate: rate,
             loan_periods: loan.repayment_type === 'amortization' ? periods : null,
             repayment_type: loan.repayment_type,
+            prepaid_months: loan.interest_collection === '前扣' ? (loan.prepaid_months || 0) : 0,
           }),
         });
         if (res.ok) {
           const data = await res.json();
-          loan.monthly_payment = data.monthly_payment;
+          loan.monthly_payment    = data.monthly_payment;
+          loan.prepaid_amount     = data.prepaid_amount || 0;
+          loan.net_disbursement   = data.net_disbursement || 0;
         }
       } catch (e) {
         /* 略過預覽錯誤，保留上次金額 */
@@ -731,9 +749,18 @@ export default {
           };
           this.loanForms = (this.member.loans || []).map((l) => {
             const parsed = this.parseRepaymentDay(l.repayment_day);
-            const interestParsed = this.parseInterestCollection(l.interest_collection);
+            // interest_collection 現在只存 "前扣" 或 "後收"
+            // 舊資料可能為 "前扣3個月" → 解析回來
+            let icType = l.interest_collection || '';
+            let prepaidMos = l.prepaid_months || 0;
+            if (String(icType).startsWith('前扣') && !prepaidMos) {
+              const m = String(icType).match(/前扣(\d+)/);
+              if (m) { prepaidMos = parseInt(m[1], 10); }
+              icType = '前扣';
+            }
             return {
               id: l.id,
+              loan_date: l.loan_date ? l.loan_date.substring(0, 10) : '',
               collateral_type: this.normalizeCollateralType(l.collateral_type),
               collateral_info: l.collateral_info || '',
               loan_amount: l.loan_amount,
@@ -741,9 +768,11 @@ export default {
               interest_rate: l.interest_rate,
               repayment_type: l.repayment_type || 'amortization',
               monthly_payment: l.monthly_payment,
-              interest_collection: interestParsed.type,
-              interest_collection_months: interestParsed.months,
-              repayment_day: parsed.type,
+              interest_collection: icType,
+              prepaid_months: prepaidMos,
+              prepaid_amount: l.prepaid_amount || 0,
+              net_disbursement: 0,
+              repayment_day_type: parsed.type,
               repayment_day_of_month: parsed.day,
               loan_periods: l.loan_periods,
               contract_months: l.contract_months,
@@ -789,6 +818,7 @@ export default {
             headers,
             credentials: 'same-origin',
             body: JSON.stringify({
+              loan_date: loan.loan_date || null,
               collateral_type: loan.collateral_type,
               collateral_info: loan.collateral_info,
               loan_amount: loan.loan_amount,
@@ -796,6 +826,7 @@ export default {
               interest_rate: loan.interest_rate,
               repayment_day: this.buildRepaymentDay(loan),
               interest_collection: this.buildInterestCollection(loan),
+              prepaid_months: loan.interest_collection === '前扣' ? (loan.prepaid_months || 0) : 0,
               loan_periods: loan.loan_periods,
               contract_months: loan.repayment_type === 'amortization' ? loan.contract_months : null,
             }),

@@ -9,6 +9,7 @@ class Loan extends Model
     protected $fillable = [
         'user_id',
         'store_id',
+        'loan_date',          // 貸款起始日
         'loan_amount',
         'remaining_amount',
         'interest_rate',
@@ -20,6 +21,16 @@ class Loan extends Model
         'interest_collection',
         'loan_periods',
         'contract_months',
+        'prepaid_months',     // 前扣期數
+        'prepaid_amount',     // 前扣總金額
+    ];
+
+    protected $casts = [
+        'loan_date'      => 'date',
+        'loan_amount'    => 'decimal:2',
+        'remaining_amount' => 'decimal:2',
+        'monthly_payment'  => 'decimal:2',
+        'prepaid_amount'   => 'decimal:2',
     ];
 
     public function store()

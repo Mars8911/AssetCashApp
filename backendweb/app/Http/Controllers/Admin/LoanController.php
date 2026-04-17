@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Loan;
 use App\Models\User;
 use App\Services\LoanCalculationService;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -30,14 +31,15 @@ class LoanController extends Controller
 
         $validated = $request->validate([
             'remaining_amount' => ['nullable', 'numeric', 'min:0'],
-            'loan_amount' => ['nullable', 'numeric', 'min:0'],
-            'interest_rate' => ['nullable', 'numeric', 'min:0'],
-            'loan_periods' => ['nullable', 'integer', 'min:0'],
-            'repayment_type' => ['required', Rule::in(['interest_only', 'amortization'])],
+            'loan_amount'      => ['nullable', 'numeric', 'min:0'],
+            'interest_rate'    => ['nullable', 'numeric', 'min:0'],
+            'loan_periods'     => ['nullable', 'integer', 'min:0'],
+            'repayment_type'   => ['required', Rule::in(['interest_only', 'amortization'])],
+            'prepaid_months'   => ['nullable', 'integer', 'min:0'],
         ]);
 
-        $discount = (float) ($member->interest_discount_percent ?? 0);
-        $stated = (float) ($validated['interest_rate'] ?? 0);
+        $discount  = (float) ($member->interest_discount_percent ?? 0);
+        $stated    = (float) ($validated['interest_rate'] ?? 0);
         $effective = $calculator->effectiveRatePercent($stated, $discount);
 
         $principal = $calculator->principalForSchedule(
@@ -56,9 +58,16 @@ class LoanController extends Controller
             $periods
         );
 
+        $prepaidMonths = (int) ($validated['prepaid_months'] ?? 0);
+        $prepaidAmount = $calculator->calculatePrepaidAmount($monthly, $prepaidMonths);
+        $netDisbursement = $calculator->calculateNetDisbursement($principal, $prepaidAmount);
+
         return response()->json([
-            'monthly_payment' => (float) $monthly,
+            'monthly_payment'              => (float) $monthly,
             'effective_interest_rate_percent' => $effective,
+            'prepaid_months'               => $prepaidMonths,
+            'prepaid_amount'               => (float) $prepaidAmount,
+            'net_disbursement'             => (float) $netDisbursement,
         ]);
     }
 
@@ -114,22 +123,24 @@ class LoanController extends Controller
         }
 
         $validated = $request->validate([
-            'collateral_type' => ['nullable', Rule::in(['汽車', '機車', '汽車機車', '房屋', '土地', '房屋土地', '其他'])],
-            'collateral_info' => ['nullable', 'string'],
-            'loan_amount' => ['sometimes', 'numeric', 'min:0'],
-            'remaining_amount' => ['sometimes', 'numeric', 'min:0'],
-            'interest_rate' => ['nullable', 'numeric', 'min:0'],
-            'repayment_day' => ['nullable', 'string', 'max:50'],
+            'loan_date'          => ['nullable', 'date'],
+            'collateral_type'    => ['nullable', Rule::in(['汽車', '機車', '汽車機車', '房屋', '土地', '房屋土地', '其他'])],
+            'collateral_info'    => ['nullable', 'string'],
+            'loan_amount'        => ['sometimes', 'numeric', 'min:0'],
+            'remaining_amount'   => ['sometimes', 'numeric', 'min:0'],
+            'interest_rate'      => ['nullable', 'numeric', 'min:0'],
+            'repayment_day'      => ['nullable', 'string', 'max:50'],
             'interest_collection' => ['nullable', 'string', 'max:50'],
-            'loan_periods' => ['nullable', 'integer', 'min:0'],
-            'contract_months' => ['nullable', 'integer', 'min:0'],
+            'loan_periods'       => ['nullable', 'integer', 'min:0'],
+            'contract_months'    => ['nullable', 'integer', 'min:0'],
+            'prepaid_months'     => ['nullable', 'integer', 'min:0'],
         ]);
 
         $loan->fill($validated);
         $loan->load('user');
 
-        $discount = (float) ($loan->user?->interest_discount_percent ?? 0);
-        $stated = (float) ($loan->interest_rate ?? 0);
+        $discount  = (float) ($loan->user?->interest_discount_percent ?? 0);
+        $stated    = (float) ($loan->interest_rate ?? 0);
         $effective = $calculator->effectiveRatePercent($stated, $discount);
         $principal = $calculator->principalForSchedule(
             (float) ($loan->remaining_amount ?? 0),
@@ -142,10 +153,81 @@ class LoanController extends Controller
             $effective,
             $periods
         );
+
+        $prepaidMonths        = (int) ($loan->prepaid_months ?? 0);
         $loan->monthly_payment = (float) $monthly;
+        $loan->prepaid_amount  = (float) $calculator->calculatePrepaidAmount($monthly, $prepaidMonths);
         $loan->save();
 
         return response()->json(['message' => 'ok', 'loan' => $loan->fresh()]);
+    }
+
+    /**
+     * 取得完整攤還計畫（含每期日期、利息、本金、餘額）
+     */
+    public function repaymentSchedule(Request $request, int $id, LoanCalculationService $calculator): JsonResponse
+    {
+        $admin = $request->user();
+        $loan  = Loan::findOrFail($id);
+
+        if ($admin->isStoreManager() && $loan->store_id !== $admin->store_id) {
+            abort(403);
+        }
+
+        if (! $loan->loan_date) {
+            return response()->json(['message' => '請先設定貸款起始日（loan_date）'], 422);
+        }
+        if (! $loan->repayment_day) {
+            return response()->json(['message' => '請先設定還款週期（repayment_day）'], 422);
+        }
+
+        $loanDate      = Carbon::parse($loan->loan_date);
+        $prepaidMonths = (int) ($loan->prepaid_months ?? 0);
+        $effective     = $calculator->effectiveRatePercent(
+            (float) ($loan->interest_rate ?? 0),
+            (float) ($loan->user?->interest_discount_percent ?? 0)
+        );
+        $principal = $calculator->principalForSchedule(
+            (float) ($loan->remaining_amount ?? 0),
+            (float) ($loan->loan_amount ?? 0)
+        );
+
+        if ($loan->repayment_type === 'amortization') {
+            $schedule = $calculator->generateAmortizationSchedule(
+                $loanDate,
+                $principal,
+                $effective,
+                (int) ($loan->loan_periods ?? 0),
+                (string) $loan->repayment_day,
+                $prepaidMonths
+            );
+        } else {
+            $schedule = $calculator->generateInterestOnlySchedule(
+                $loanDate,
+                $principal,
+                $effective,
+                (int) ($loan->contract_months ?? 0),
+                (string) $loan->repayment_day,
+                $prepaidMonths
+            );
+        }
+
+        $nextDate = $calculator->calculateNextPaymentDate(
+            $loanDate,
+            (string) $loan->repayment_day,
+            $prepaidMonths
+        );
+
+        return response()->json([
+            'next_payment_date' => $nextDate->toDateString(),
+            'prepaid_months'    => $prepaidMonths,
+            'prepaid_amount'    => (float) ($loan->prepaid_amount ?? 0),
+            'net_disbursement'  => (float) $calculator->calculateNetDisbursement(
+                $principal,
+                (string) ($loan->prepaid_amount ?? '0')
+            ),
+            'schedule'          => $schedule,
+        ]);
     }
 
     /**

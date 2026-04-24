@@ -10,6 +10,30 @@ use Illuminate\Http\Request;
 class LocationController extends Controller
 {
     /**
+     * Flutter App 輪詢：檢查後台是否有「立即定位」請求
+     * 有請求時回傳 pending=true，App 收到後立即抓 GPS 上傳，並清除請求
+     */
+    public function checkRequest(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if (! $user->location_requested_at) {
+            return response()->json(['pending' => false]);
+        }
+
+        // 超過 5 分鐘的請求自動失效（避免舊請求一直觸發）
+        if ($user->location_requested_at->diffInMinutes(now()) > 5) {
+            $user->update(['location_requested_at' => null]);
+            return response()->json(['pending' => false]);
+        }
+
+        // 清除請求（避免重複觸發）
+        $user->update(['location_requested_at' => null]);
+
+        return response()->json(['pending' => true]);
+    }
+
+    /**
      * 會員上傳定位點（Flutter APP 背景服務呼叫）
      * 需 Bearer Token 認證，僅能上傳自己的定位
      */

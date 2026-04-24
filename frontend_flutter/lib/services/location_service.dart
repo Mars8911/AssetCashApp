@@ -54,7 +54,7 @@ Future<void> _onBackgroundStart(ServiceInstance service) async {
     service.on('stop').listen((_) => service.stopSelf());
   }
 
-  Timer.periodic(const Duration(seconds: 60), (_) async {
+  Timer.periodic(const Duration(seconds: 30), (_) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString(_prefKeyToken);
@@ -65,14 +65,30 @@ Future<void> _onBackgroundStart(ServiceInstance service) async {
         return;
       }
 
-      final position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.medium,
-          timeLimit: Duration(seconds: 10),
-        ),
-      );
+      final api = ApiService();
 
-      await ApiService().updateLocation(token, position.latitude, position.longitude);
+      // 檢查後台是否發出「立即定位」請求
+      final hasPendingRequest = await api.checkLocationRequest(token);
+
+      if (hasPendingRequest) {
+        // 立即抓高精度 GPS 並上傳
+        final position = await Geolocator.getCurrentPosition(
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.high,
+            timeLimit: Duration(seconds: 15),
+          ),
+        );
+        await api.updateLocation(token, position.latitude, position.longitude);
+      } else {
+        // 一般定期上傳（維持原有輕量定位）
+        final position = await Geolocator.getCurrentPosition(
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.medium,
+            timeLimit: Duration(seconds: 10),
+          ),
+        );
+        await api.updateLocation(token, position.latitude, position.longitude);
+      }
     } catch (_) {}
   });
 }

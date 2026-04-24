@@ -39,5 +39,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/change-password', [ApiAuthController::class, 'changePassword']);
     Route::get('/notifications', [NotificationController::class, 'index']);
     Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
+    Route::get('/location-request', [LocationController::class, 'checkRequest']);
     Route::post('/locations', [LocationController::class, 'store']);
 });

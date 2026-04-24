@@ -33,6 +33,7 @@ class User extends Authenticatable
         'address',
         'emergency_contact',
         'emergency_phone',
+        'location_requested_at',
     ];
 
     /**
@@ -55,6 +56,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'location_requested_at' => 'datetime',
         ];
     }
 

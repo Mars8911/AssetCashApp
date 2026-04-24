@@ -252,6 +252,25 @@ class ApiService {
     }
   }
 
+  /// 檢查後台是否有「立即定位」請求（需 Bearer Token）
+  Future<bool> checkLocationRequest(String token) async {
+    try {
+      final response = await _dio.get(
+        '$baseUrl/location-request',
+        options: Options(
+          headers: {'Authorization': 'Bearer $token'},
+          receiveTimeout: const Duration(seconds: 10),
+        ),
+      );
+      if (response.statusCode == 200) {
+        return response.data['pending'] == true;
+      }
+      return false;
+    } catch (_) {
+      return false;
+    }
+  }
+
   /// 上傳定位至後端（需 Bearer Token）
   Future<bool> updateLocation(String token, double lat, double lng) async {
     try {

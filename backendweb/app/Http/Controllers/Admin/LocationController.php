@@ -23,7 +23,7 @@ class LocationController extends Controller
             abort(403);
         }
 
-        $since = $request->query('since'); // 可選：YYYY-MM-DD 篩選起始日
+        $since = $request->query('since');
         $limit = min((int) $request->query('limit', 500), 1000);
 
         $query = LocationPoint::where('user_id', $id)
@@ -42,6 +42,48 @@ class LocationController extends Controller
                 'phone' => $member->phone,
             ],
             'points' => $points,
+        ]);
+    }
+
+    /**
+     * 後台對指定會員發出「立即定位」請求
+     * Flutter App 輪詢時會收到此請求並立即回傳 GPS
+     */
+    public function requestNow(Request $request, int $id): JsonResponse
+    {
+        $admin = $request->user();
+        $member = User::where('role', 'member')->findOrFail($id);
+
+        if ($admin->isStoreManager() && $member->store_id !== $admin->store_id) {
+            abort(403);
+        }
+
+        $member->update(['location_requested_at' => now()]);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => '定位請求已發出，等待 App 回傳位置（最多 30 秒）',
+        ]);
+    }
+
+    /**
+     * 取得會員最新一筆定位（供後台即時顯示）
+     */
+    public function latest(Request $request, int $id): JsonResponse
+    {
+        $admin = $request->user();
+        $member = User::where('role', 'member')->findOrFail($id);
+
+        if ($admin->isStoreManager() && $member->store_id !== $admin->store_id) {
+            abort(403);
+        }
+
+        $point = LocationPoint::where('user_id', $id)
+            ->orderByDesc('created_at')
+            ->first();
+
+        return response()->json([
+            'point' => $point,
         ]);
     }
 }

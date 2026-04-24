@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "31154250559",
+    "project_id": "assetcashapp-e9dfd",
+    "storage_bucket": "assetcashapp-e9dfd.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:31154250559:android:4386d33636f1c80b19298a",
+        "android_client_info": {
+          "package_name": "com.hm.trackme.frontend_flutter"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCgyFWU1B0cfrejubgM-Ivm1BYXRgN0zoQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

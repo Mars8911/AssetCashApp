@@ -8,9 +8,14 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Kreait\Firebase\Contract\Messaging;
+use Kreait\Firebase\Messaging\CloudMessage;
+use Kreait\Firebase\Messaging\Notification;
 
 class PushNotificationController extends Controller
 {
+    public function __construct(private readonly Messaging $messaging) {}
+
     /**
      * 發送推播訊息（群體或指定會員）
      */
@@ -28,7 +33,8 @@ class PushNotificationController extends Controller
         if ($admin->isShareholder()) {
             return response()->json(['message' => '股東管理者無權限發送推播'], 403);
         }
-        $query = User::where('role', 'member');
+
+        $query = User::where('role', 'member')->whereNotNull('fcm_token');
 
         if ($admin->isStoreManager()) {
             if (! $admin->store_id) {
@@ -38,7 +44,7 @@ class PushNotificationController extends Controller
         }
 
         if ($validated['target_type'] === 'single') {
-            $member = $query->findOrFail($validated['user_id']);
+            $member = User::findOrFail($validated['user_id']);
             if ($admin->isStoreManager() && $member->store_id !== $admin->store_id) {
                 abort(403);
             }
@@ -48,7 +54,7 @@ class PushNotificationController extends Controller
         }
 
         if ($targets->isEmpty()) {
-            return response()->json(['message' => '無符合條件的發送對象'], 400);
+            return response()->json(['message' => '無符合條件的發送對象（或對象皆未開啟推播）'], 400);
         }
 
         DB::beginTransaction();
@@ -62,8 +68,14 @@ class PushNotificationController extends Controller
                     'category' => $validated['category'],
                     'target_type' => $validated['target_type'],
                 ]);
+
+                if ($user->fcm_token) {
+                    $message = CloudMessage::withTarget('token', $user->fcm_token)
+                        ->withNotification(Notification::create($validated['title'], $validated['body']))
+                        ->withData(['category' => $validated['category']]);
+                    $this->messaging->send($message);
+                }
             }
-            // TODO: 整合 FCM 實際發送推播，可透過 Queue Job 非同步處理
             DB::commit();
         } catch (\Throwable $e) {
             DB::rollBack();
@@ -75,5 +87,33 @@ class PushNotificationController extends Controller
             'message' => "推播已發送，共 {$count} 位會員",
             'sent_count' => $count,
         ]);
+    }
+
+    /**
+     * 後台發送「立即定位」靜默推播給指定會員
+     */
+    public function requestLocation(Request $request): JsonResponse
+    {
+        $request->validate([
+            'user_id' => ['required', 'integer', 'exists:users,id'],
+        ]);
+
+        $user = User::findOrFail($request->user_id);
+
+        if (! $user->fcm_token) {
+            return response()->json(['message' => '該會員尚未開啟推播通知'], 400);
+        }
+
+        try {
+            $message = CloudMessage::withTarget('token', $user->fcm_token)
+                ->withData(['type' => 'location_request']);
+            $this->messaging->send($message);
+
+            $user->update(['location_requested_at' => now()]);
+        } catch (\Throwable $e) {
+            return response()->json(['message' => '發送失敗：' . $e->getMessage()], 500);
+        }
+
+        return response()->json(['message' => '立即定位請求已發送']);
     }
 }

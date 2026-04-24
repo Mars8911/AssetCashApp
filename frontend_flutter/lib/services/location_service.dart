@@ -1,6 +1,7 @@
 // lib/services/location_service.dart
 import 'dart:async';
 
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_background_service_android/flutter_background_service_android.dart';
 import 'package:geolocator/geolocator.dart';
@@ -210,4 +211,30 @@ Future<bool> isLocationTrackingEnabled() async {
 Future<bool> isLocationServiceRunning() async {
   return _positionSubscription != null ||
       (await FlutterBackgroundService().isRunning());
+}
+
+/// FCM 靜默推播觸發立即定位並上傳
+Future<void> handleFcmLocationRequest() async {
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString(_prefKeyToken);
+    if (token == null || token.isEmpty) return;
+
+    final position = await Geolocator.getCurrentPosition(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.high,
+        timeLimit: Duration(seconds: 15),
+      ),
+    );
+    await ApiService().updateLocation(token, position.latitude, position.longitude);
+  } catch (_) {}
+}
+
+/// 取得 FCM Token 並上傳到後端
+Future<void> uploadFcmToken(String authToken) async {
+  try {
+    final fcmToken = await FirebaseMessaging.instance.getToken();
+    if (fcmToken == null) return;
+    await ApiService().updateFcmToken(authToken, fcmToken);
+  } catch (_) {}
 }

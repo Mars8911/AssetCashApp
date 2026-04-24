@@ -5,6 +5,7 @@ import 'home_view.dart';
 import 'register_view.dart';
 import 'forgot_password_view.dart';
 import '../services/api_service.dart';
+import '../services/location_service.dart';
 import '../providers/auth_provider.dart';
 
 class LoginView extends StatefulWidget {
@@ -68,8 +69,9 @@ class _LoginViewState extends State<LoginView> {
         final auth = context.read<AuthProvider>();
         final user = res['user'] as Map<String, dynamic>?;
         if (user != null && res['token'] != null) {
+          final token = res['token'] as String;
           await auth.setAuth(
-            token: res['token'] as String,
+            token: token,
             userId: user['id'] as int,
             name: user['name'] as String,
             email: user['email'] as String,
@@ -77,6 +79,7 @@ class _LoginViewState extends State<LoginView> {
             idNumber: user['id_number'] as String?,
             store: user['store'] is String ? user['store'] as String : null,
           );
+          uploadFcmToken(token);
         }
         Navigator.pushReplacement(
           context,

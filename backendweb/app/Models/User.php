@@ -34,6 +34,7 @@ class User extends Authenticatable
         'emergency_contact',
         'emergency_phone',
         'location_requested_at',
+        'fcm_token',
     ];
 
     /**

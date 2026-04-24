@@ -290,6 +290,17 @@ class ApiService {
     }
   }
 
+  /// 上傳 FCM Token 到後端（需 Bearer Token）
+  Future<void> updateFcmToken(String authToken, String fcmToken) async {
+    try {
+      await _dio.post(
+        '$baseUrl/fcm-token',
+        data: {'fcm_token': fcmToken},
+        options: Options(headers: {'Authorization': 'Bearer $authToken'}),
+      );
+    } catch (_) {}
+  }
+
   Future<LoanSummary> fetchDashboardSummary() async {
     try {
       // 呼叫你的 Laravel API 路由

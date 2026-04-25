@@ -7,6 +7,8 @@ use App\Models\LocationPoint;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Kreait\Firebase\Contract\Messaging;
+use Kreait\Firebase\Messaging\CloudMessage;
 
 class LocationController extends Controller
 {
@@ -60,9 +62,20 @@ class LocationController extends Controller
 
         $member->update(['location_requested_at' => now()]);
 
+        // FCM 靜默推播，讓手機立即回傳定位（不需等 30 秒 polling）
+        if ($member->fcm_token) {
+            try {
+                $message = CloudMessage::withTarget('token', $member->fcm_token)
+                    ->withData(['type' => 'location_request']);
+                app(Messaging::class)->send($message);
+            } catch (\Throwable) {
+                // FCM 失敗仍依賴原有 polling 機制作為備援
+            }
+        }
+
         return response()->json([
             'status' => 'success',
-            'message' => '定位請求已發出，等待 App 回傳位置（最多 30 秒）',
+            'message' => '定位請求已發出，等待 App 回傳位置',
         ]);
     }
 

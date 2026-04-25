@@ -52,6 +52,19 @@ class ApiService {
   static const String baseUrl = "https://assetcash.com.tw/api";
   final Dio _dio = Dio();
 
+  ApiService() {
+    _dio.interceptors.add(InterceptorsWrapper(
+      onRequest: (options, handler) {
+        print('DEBUG_REQUEST: ${options.method} ${options.uri} port=${options.uri.port}');
+        handler.next(options);
+      },
+      onError: (err, handler) {
+        print('DEBUG_ERROR: ${err.type} url=${err.requestOptions.uri} port=${err.requestOptions.uri.port} inner=${err.error}');
+        handler.next(err);
+      },
+    ));
+  }
+
   /// 取得店家列表（供註冊時選擇）
   Future<List<StoreItem>> fetchStores() async {
     try {

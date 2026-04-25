@@ -21,6 +21,14 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+  // 前台收到 FCM 靜默推播時立即定位
+  FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+    if (message.data['type'] == 'location_request') {
+      handleFcmLocationRequest();
+    }
+  });
+
   await initializeLocationService();
   runApp(const MyApp());
 }

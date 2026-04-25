@@ -65,7 +65,8 @@ class LocationController extends Controller
         // FCM 靜默推播，讓手機立即回傳定位（不需等 30 秒 polling）
         if ($member->fcm_token) {
             try {
-                $message = CloudMessage::withTarget('token', $member->fcm_token)
+                $message = CloudMessage::new()
+                    ->withToken($member->fcm_token)
                     ->withData(['type' => 'location_request']);
                 app(Messaging::class)->send($message);
             } catch (\Throwable) {

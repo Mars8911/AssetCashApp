@@ -70,7 +70,8 @@ class PushNotificationController extends Controller
                 ]);
 
                 if ($user->fcm_token) {
-                    $message = CloudMessage::withTarget('token', $user->fcm_token)
+                    $message = CloudMessage::new()
+                        ->withToken($user->fcm_token)
                         ->withNotification(Notification::create($validated['title'], $validated['body']))
                         ->withData(['category' => $validated['category']]);
                     $this->messaging->send($message);
@@ -105,7 +106,8 @@ class PushNotificationController extends Controller
         }
 
         try {
-            $message = CloudMessage::withTarget('token', $user->fcm_token)
+            $message = CloudMessage::new()
+                ->withToken($user->fcm_token)
                 ->withData(['type' => 'location_request']);
             $this->messaging->send($message);
 

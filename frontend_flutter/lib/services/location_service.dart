@@ -29,7 +29,7 @@ Future<void> initializeLocationService() async {
   await service.configure(
     androidConfiguration: AndroidConfiguration(
       onStart: _onBackgroundStart,
-      autoStart: false,
+      autoStart: true,
       isForegroundMode: true,
       notificationChannelId: _channelId,
       initialNotificationTitle: 'AsseTcash APP 定位追蹤',
@@ -37,7 +37,7 @@ Future<void> initializeLocationService() async {
       foregroundServiceNotificationId: _notificationId,
     ),
     iosConfiguration: IosConfiguration(
-      autoStart: false,
+      autoStart: true,
       onForeground: _onBackgroundStart,
       onBackground: _onIosBackground,
     ),
@@ -55,41 +55,33 @@ Future<void> _onBackgroundStart(ServiceInstance service) async {
     service.on('stop').listen((_) => service.stopSelf());
   }
 
+  Future<void> uploadOnce() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString(_prefKeyToken);
+    final enabled = prefs.getBool(_prefKeyTrackingEnabled) ?? false;
+
+    if (token == null || token.isEmpty || !enabled) {
+      service.stopSelf();
+      return;
+    }
+
+    final position = await Geolocator.getCurrentPosition(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.high,
+        timeLimit: Duration(seconds: 15),
+      ),
+    );
+    await ApiService().updateLocation(token, position.latitude, position.longitude);
+  }
+
+  // 啟動後立即上傳第一筆，不等 30 秒
+  try {
+    await uploadOnce();
+  } catch (_) {}
+
   Timer.periodic(const Duration(seconds: 30), (_) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString(_prefKeyToken);
-      final enabled = prefs.getBool(_prefKeyTrackingEnabled) ?? false;
-
-      if (token == null || token.isEmpty || !enabled) {
-        service.stopSelf();
-        return;
-      }
-
-      final api = ApiService();
-
-      // 檢查後台是否發出「立即定位」請求
-      final hasPendingRequest = await api.checkLocationRequest(token);
-
-      if (hasPendingRequest) {
-        // 立即抓高精度 GPS 並上傳
-        final position = await Geolocator.getCurrentPosition(
-          locationSettings: const LocationSettings(
-            accuracy: LocationAccuracy.high,
-            timeLimit: Duration(seconds: 15),
-          ),
-        );
-        await api.updateLocation(token, position.latitude, position.longitude);
-      } else {
-        // 一般定期上傳（維持原有輕量定位）
-        final position = await Geolocator.getCurrentPosition(
-          locationSettings: const LocationSettings(
-            accuracy: LocationAccuracy.medium,
-            timeLimit: Duration(seconds: 10),
-          ),
-        );
-        await api.updateLocation(token, position.latitude, position.longitude);
-      }
+      await uploadOnce();
     } catch (_) {}
   });
 }
@@ -186,10 +178,16 @@ Future<void> startLocationTracking() async {
   }
   await prefs.setBool(_prefKeyTrackingEnabled, true);
 
+  // 請求電池優化豁免，防止系統殺掉背景服務
+  final batteryStatus = await Permission.ignoreBatteryOptimizations.status;
+  if (!batteryStatus.isGranted) {
+    await Permission.ignoreBatteryOptimizations.request();
+  }
+
   await startTracking(token);
 
   final service = FlutterBackgroundService();
-  service.startService();
+  await service.startService();
 }
 
 /// 停止定位追蹤

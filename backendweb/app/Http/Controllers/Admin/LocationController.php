@@ -8,6 +8,8 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Kreait\Firebase\Contract\Messaging;
+use Kreait\Firebase\Messaging\AndroidConfig;
+use Kreait\Firebase\Messaging\ApnsConfig;
 use Kreait\Firebase\Messaging\CloudMessage;
 
 class LocationController extends Controller
@@ -67,7 +69,21 @@ class LocationController extends Controller
             try {
                 $message = CloudMessage::new()
                     ->withToken($member->fcm_token)
-                    ->withData(['type' => 'location_request']);
+                    ->withData(['type' => 'location_request'])
+                    ->withAndroidConfig(
+                        AndroidConfig::new()->withHighMessagePriority()
+                    )
+                    ->withApnsConfig(
+                        ApnsConfig::fromArray([
+                            'headers' => [
+                                'apns-priority' => '10',
+                                'apns-push-type' => 'background',
+                            ],
+                            'payload' => [
+                                'aps' => ['content-available' => 1],
+                            ],
+                        ])
+                    );
                 app(Messaging::class)->send($message);
             } catch (\Throwable) {
                 // FCM 失敗仍依賴原有 polling 機制作為備援

@@ -1,5 +1,6 @@
 <template>
   <div class="d-flex admin-layout">
+    <!-- 桌機側邊欄 -->
     <nav class="sidebar d-none d-md-flex flex-column flex-shrink-0 p-3">
       <router-link to="/dashboard" class="navbar-brand text-white mb-4 text-decoration-none">📍 AssetCash APP</router-link>
       <ul class="nav flex-column">
@@ -27,15 +28,36 @@
     <div class="flex-grow-1 d-flex flex-column min-vh-100">
       <nav class="navbar navbar-expand-md navbar-light bg-white border-bottom">
         <div class="container-fluid">
-          <button class="navbar-toggler d-md-none" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+          <!-- 手機版顯示品牌名 -->
+          <span class="navbar-brand d-md-none fw-bold text-primary">📍 AssetCash</span>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false">
             <span class="navbar-toggler-icon"></span>
           </button>
           <div class="collapse navbar-collapse" id="navbarNav">
+            <!-- 手機版導航連結（桌機不顯示，由側邊欄負責） -->
+            <ul class="navbar-nav d-md-none flex-column border-bottom mb-2 pb-2">
+              <li class="nav-item">
+                <router-link to="/dashboard" class="nav-link" active-class="active" @click="closeNavbar">儀表板</router-link>
+              </li>
+              <li class="nav-item">
+                <router-link to="/members" class="nav-link" active-class="active" @click="closeNavbar">會員資訊</router-link>
+              </li>
+              <li v-if="user?.role !== 'shareholder'" class="nav-item">
+                <router-link to="/push-notifications" class="nav-link" active-class="active" @click="closeNavbar">訊息推播管理</router-link>
+              </li>
+              <li v-if="user?.role !== 'shareholder'" class="nav-item">
+                <router-link to="/coupons" class="nav-link" active-class="active" @click="closeNavbar">優惠券管理</router-link>
+              </li>
+              <li v-if="user?.role === 'super_admin'" class="nav-item">
+                <router-link to="/admins" class="nav-link" active-class="active" @click="closeNavbar">管理者管理</router-link>
+              </li>
+              <li v-if="user?.role === 'super_admin'" class="nav-item">
+                <router-link to="/stores" class="nav-link" active-class="active" @click="closeNavbar">店家管理</router-link>
+              </li>
+            </ul>
+            <!-- 使用者資訊 + 登出 -->
             <span class="navbar-text me-auto">
-              <span
-                class="badge me-2"
-                :class="roleBadgeClass(user?.role)"
-              >
+              <span class="badge me-2" :class="roleBadgeClass(user?.role)">
                 {{ roleLabel(user?.role) }}
               </span>
               {{ user?.name }}
@@ -76,6 +98,13 @@ export default {
     };
   },
   methods: {
+    closeNavbar() {
+      const navEl = document.getElementById('navbarNav');
+      if (navEl && navEl.classList.contains('show')) {
+        const btn = document.querySelector('[data-bs-target="#navbarNav"]');
+        btn?.click();
+      }
+    },
     async handleLogout() {
       if (this.loggingOut) return;
       this.loggingOut = true;
